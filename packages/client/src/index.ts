@@ -71,6 +71,15 @@ export type {
 export type { OrderStruct, WireOrder } from './signing/order';
 
 // ---------------------------------------------------------------------------
+// Deposits and withdrawals
+// ---------------------------------------------------------------------------
+
+export type {
+  VerificationRequest,
+  VerifyCallback,
+} from './bridge/verification';
+
+// ---------------------------------------------------------------------------
 // Errors: every class, and the type of the guards
 // ---------------------------------------------------------------------------
 
