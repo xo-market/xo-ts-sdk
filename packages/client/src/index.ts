@@ -42,6 +42,7 @@ export type { OrderStruct, WireOrder } from './signing/order';
 // Errors: every class, and the type of the guards
 // ---------------------------------------------------------------------------
 
+export { MintedKeyError } from './auth/backendAuth';
 export {
   AuthRequiredError,
   type ErrorGuard,
