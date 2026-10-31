@@ -1,0 +1,119 @@
+{
+  "tab": "TypeScript SDK",
+  "root": "typescript-sdk",
+  "insertAfter": "Data API reference",
+  "repo": "https://github.com/xo-market/xo-ts-sdk/blob/main",
+  "groups": [
+    {
+      "group": "Get started",
+      "icon": "rocket",
+      "pages": [
+        {
+          "source": "README.md",
+          "slug": "overview",
+          "sidebarTitle": "Overview",
+          "description": "Read XO markets, trade, and move money from your server."
+        },
+        {
+          "source": "install.md",
+          "slug": "install",
+          "description": "Add the SDK to a Node or Bun project."
+        },
+        {
+          "source": "quickstart.md",
+          "slug": "quickstart",
+          "description": "Go from a new key to your first order on XO."
+        },
+        {
+          "source": "examples.md",
+          "slug": "examples",
+          "description": "Short scripts you can run, one task each."
+        },
+        {
+          "source": "sdk-direction.md",
+          "slug": "sdk-direction",
+          "description": "How the methods are named and shaped, and what stays the same."
+        }
+      ]
+    },
+    {
+      "group": "Market data",
+      "icon": "chart-line",
+      "pages": [
+        {
+          "source": "markets.md",
+          "slug": "markets",
+          "description": "List markets and read prices and order books. No key needed."
+        },
+        {
+          "source": "realtime.md",
+          "slug": "realtime",
+          "description": "Stream order books, your orders and your portfolio."
+        },
+        {
+          "source": "portfolio.md",
+          "slug": "portfolio",
+          "description": "Read an account's positions, PnL and activity."
+        }
+      ]
+    },
+    {
+      "group": "Trading",
+      "icon": "arrow-right-arrow-left",
+      "pages": [
+        {
+          "source": "authentication.md",
+          "slug": "authentication",
+          "description": "How your key signs in, and how to keep credentials across restarts."
+        },
+        {
+          "source": "orders.md",
+          "slug": "orders",
+          "description": "Place, list and cancel orders."
+        },
+        {
+          "source": "smart-wallets.md",
+          "slug": "smart-wallets",
+          "description": "Trade through a smart wallet, such as an XO website account."
+        },
+        {
+          "source": "production.md",
+          "slug": "production",
+          "description": "What to set up before your server runs on its own."
+        }
+      ]
+    },
+    {
+      "group": "Funds",
+      "icon": "money-bill-transfer",
+      "pages": [
+        {
+          "source": "deposits-and-withdrawals.md",
+          "slug": "deposits-and-withdrawals",
+          "description": "Move USDC into XO and back out."
+        },
+        {
+          "source": "onchain.md",
+          "slug": "onchain",
+          "description": "Balances, account setup, transfers, merging and redeeming."
+        }
+      ]
+    },
+    {
+      "group": "Help",
+      "icon": "life-ring",
+      "pages": [
+        {
+          "source": "errors.md",
+          "slug": "errors",
+          "description": "Every error code the SDK throws, and what to do."
+        },
+        {
+          "source": "changelog.md",
+          "slug": "changelog",
+          "description": "What changed in each version."
+        }
+      ]
+    }
+  ]
+}

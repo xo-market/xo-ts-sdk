@@ -1,0 +1,335 @@
+{
+  "schemaVersion": "2.0",
+  "id": 0,
+  "name": "@xomarket/client",
+  "variant": "project",
+  "kind": 1,
+  "flags": {},
+  "children": [
+    {
+      "id": 1,
+      "name": "@xomarket/client",
+      "variant": "declaration",
+      "kind": 2,
+      "flags": {},
+      "children": [
+        {
+          "id": 848,
+          "name": "AuthError",
+          "variant": "declaration",
+          "kind": 128,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/core/errors.ts",
+              "line": 117,
+              "character": 13,
+              "url": "core/errors.ts"
+            }
+          ]
+        },
+        {
+          "id": 516,
+          "name": "Clock",
+          "variant": "declaration",
+          "kind": 128,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/core/clock.ts",
+              "line": 53,
+              "character": 13,
+              "url": "core/clock.ts"
+            }
+          ]
+        },
+        {
+          "id": 1296,
+          "name": "OrderbookClient",
+          "variant": "declaration",
+          "kind": 128,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/orderbook/client.ts",
+              "line": 343,
+              "character": 13,
+              "url": "orderbook/client.ts"
+            }
+          ]
+        },
+        {
+          "id": 1090,
+          "name": "XoError",
+          "variant": "declaration",
+          "kind": 128,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/core/errors.ts",
+              "line": 32,
+              "character": 13,
+              "url": "core/errors.ts"
+            }
+          ]
+        },
+        {
+          "id": 767,
+          "name": "CredentialStore",
+          "variant": "declaration",
+          "kind": 256,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/auth/store.ts",
+              "line": 39,
+              "character": 17,
+              "url": "auth/store.ts"
+            }
+          ]
+        },
+        {
+          "id": 1281,
+          "name": "GetMarketsOptions",
+          "variant": "declaration",
+          "kind": 256,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/orderbook/client.ts",
+              "line": 170,
+              "character": 17,
+              "url": "orderbook/client.ts"
+            }
+          ]
+        },
+        {
+          "id": 2453,
+          "name": "Market",
+          "variant": "declaration",
+          "kind": 256,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/data/schemas.ts",
+              "line": 338,
+              "character": 17,
+              "url": "data/schemas.ts"
+            }
+          ]
+        },
+        {
+          "id": 690,
+          "name": "ResolveDeps",
+          "variant": "declaration",
+          "kind": 256,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/markets/resolve.ts",
+              "line": 109,
+              "character": 17,
+              "url": "markets/resolve.ts"
+            }
+          ]
+        },
+        {
+          "id": 698,
+          "name": "ResolvedMarket",
+          "variant": "declaration",
+          "kind": 256,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/markets/resolve.ts",
+              "line": 83,
+              "character": 17,
+              "url": "markets/resolve.ts"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "name": "XoAuth",
+          "variant": "declaration",
+          "kind": 256,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/clients/public.ts",
+              "line": 187,
+              "character": 17,
+              "url": "clients/public.ts"
+            }
+          ]
+        },
+        {
+          "id": 1200,
+          "name": "OrderHash",
+          "variant": "declaration",
+          "kind": 2097152,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/core/types.ts",
+              "line": 35,
+              "character": 12,
+              "url": "core/types.ts"
+            }
+          ]
+        },
+        {
+          "id": 688,
+          "name": "SDK_VERSION",
+          "variant": "declaration",
+          "kind": 32,
+          "flags": {
+            "isConst": true
+          },
+          "sources": [
+            {
+              "fileName": "packages/client/src/core/version.ts",
+              "line": 7,
+              "character": 13,
+              "url": "core/version.ts"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "createPublicClient",
+          "variant": "declaration",
+          "kind": 64,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/clients/public.ts",
+              "line": 629,
+              "character": 22,
+              "url": "clients/public.ts"
+            }
+          ]
+        },
+        {
+          "id": 708,
+          "name": "resolveMarket",
+          "variant": "declaration",
+          "kind": 64,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/markets/resolve.ts",
+              "line": 607,
+              "character": 22,
+              "url": "markets/resolve.ts"
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "fileName": "packages/client/src/index.ts",
+          "line": 1,
+          "character": 0,
+          "url": "index.ts"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "@xomarket/client/node",
+      "variant": "declaration",
+      "kind": 2,
+      "flags": {},
+      "children": [
+        {
+          "id": 4694,
+          "name": "fileStore",
+          "variant": "declaration",
+          "kind": 64,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/auth/fileStore.ts",
+              "line": 128,
+              "character": 16,
+              "url": "auth/fileStore.ts"
+            }
+          ]
+        },
+        {
+          "id": 4698,
+          "name": "CredentialStore",
+          "variant": "reference",
+          "kind": 4194304,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/node.ts",
+              "line": 14,
+              "character": 2,
+              "url": "node.ts"
+            }
+          ],
+          "target": 767
+        }
+      ],
+      "sources": [
+        {
+          "fileName": "packages/client/src/node.ts",
+          "line": 1,
+          "character": 0,
+          "url": "node.ts"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "@xomarket/client/signing",
+      "variant": "declaration",
+      "kind": 2,
+      "flags": {},
+      "children": [
+        {
+          "id": 4874,
+          "name": "hashOrder",
+          "variant": "declaration",
+          "kind": 64,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/signing/order.ts",
+              "line": 184,
+              "character": 16,
+              "url": "signing/order.ts"
+            }
+          ]
+        },
+        {
+          "id": 4708,
+          "name": "OrderHash",
+          "variant": "reference",
+          "kind": 4194304,
+          "flags": {},
+          "sources": [
+            {
+              "fileName": "packages/client/src/signing/index.ts",
+              "line": 16,
+              "character": 14,
+              "url": "signing/index.ts"
+            }
+          ],
+          "target": 1200
+        }
+      ],
+      "sources": [
+        {
+          "fileName": "packages/client/src/signing/index.ts",
+          "line": 1,
+          "character": 0,
+          "url": "signing/index.ts"
+        }
+      ]
+    }
+  ]
+}
