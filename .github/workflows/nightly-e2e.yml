@@ -1,0 +1,104 @@
+name: Nightly e2e
+
+# The live e2e suite against XO mainnet, every night, read-only: the strict contract checks of
+# the public routes, and the account reads of ONE fixed wallet that holds nothing. It never
+# places or cancels an order, sends a transaction or calls a write route; the only writes are
+# signing in and out and the sponsor's sign-only route, and the suite refuses any other before
+# it leaves the runner (packages/client/e2e/setup.ts). There is no pull_request trigger on
+# purpose: the wallet's key must never reach a workflow run from a fork.
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+# Two runs at once would share the wallet's logins and the services' rate limits: a second run
+# waits for the first instead.
+concurrency:
+  group: nightly-e2e
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    name: Live e2e (mainnet, read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      ISSUE_TITLE: Nightly e2e failing
+    steps:
+      # Every action is pinned by its full commit SHA (the tag in the comment): this job holds
+      # the wallet's key, so a moved tag must not change what runs next to it.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # pnpm version is read from "packageManager" in the root package.json.
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The secret is in this step's environment only. The tests never print a key, and the
+      # failure report scrubs it again (e2e/issueReport.ts). Without XO_E2E_WALLET_PK the
+      # signed-in blocks are skipped and the public ones still run. The step's own timeout
+      # fails a hang here, so the issue step below still runs.
+      - name: Run the live e2e suite (strict responses)
+        working-directory: packages/client
+        timeout-minutes: 50
+        env:
+          XO_E2E: '1'
+          XO_E2E_ISSUE_FILE: ${{ runner.temp }}/e2e-failures.md
+          XO_E2E_WALLET_PK: ${{ secrets.XO_E2E_WALLET_PK }}
+        run: pnpm test:e2e
+
+      # No secret in this step. The body is the redacted report the run wrote (failing test
+      # names and errors), or a pointer to the log when the run failed before writing one. The
+      # issue steps run on main only: a manual run on another branch never touches the issue.
+      - name: Open or update the failure issue
+        if: failure() && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_FILE: ${{ runner.temp }}/e2e-failures.md
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          body="${RUNNER_TEMP}/issue-body.md"
+          {
+            echo "Run: ${RUN_URL} (commit ${GITHUB_SHA})"
+            echo
+            if [ -s "${ISSUE_FILE}" ]; then
+              cat "${ISSUE_FILE}"
+            else
+              echo "The run failed before the e2e report was written: see the run log."
+            fi
+          } > "${body}"
+          number="$(gh issue list --state open --search "\"${ISSUE_TITLE}\" in:title" \
+            --json number,title --jq "map(select(.title == \"${ISSUE_TITLE}\")) | .[0].number // empty")"
+          if [ -n "${number}" ]; then
+            gh issue comment "${number}" --body-file "${body}"
+          else
+            gh issue create --title "${ISSUE_TITLE}" --body-file "${body}"
+          fi
+
+      # A night that passes closes the issue a failing night opened. No secret here either.
+      - name: Close the failure issue
+        if: success() && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          number="$(gh issue list --state open --search "\"${ISSUE_TITLE}\" in:title" \
+            --json number,title --jq "map(select(.title == \"${ISSUE_TITLE}\")) | .[0].number // empty")"
+          if [ -n "${number}" ]; then
+            gh issue comment "${number}" --body "Passing again: ${RUN_URL} (commit ${GITHUB_SHA})"
+            gh issue close "${number}"
+          fi
