@@ -1,6 +1,6 @@
 // `@xomarket/client`: the universal entry. No Node builtin is reachable from here (the
-// Node-only parts live in `@xomarket/client/node`, the signing kit in
-// `@xomarket/client/signing`).
+// Node-only parts live in `@xomarket/client/node`, the signers of a private key or a viem
+// account in `@xomarket/client/viem`, the signing kit in `@xomarket/client/signing`).
 //
 // Explicit names only: never `export *`, and nothing marked `@internal` or from an
 // `internal.ts`. What is here is what a user names to create a client, call it, read what it
@@ -29,6 +29,7 @@ export type { Page, Paginated } from './core/paginated';
 export type { RequestOptions } from './core/requestOptions';
 export type { RateLimitUpdate } from './core/transport';
 export { SDK_VERSION } from './core/version';
+export type { Signer } from './wallet/publicSigner';
 
 // ---------------------------------------------------------------------------
 // Credentials
