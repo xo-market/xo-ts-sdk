@@ -36,6 +36,7 @@ export type { OrderbookCredential } from './signing/hmac';
 // Orders
 // ---------------------------------------------------------------------------
 
+export { OrderSide, OrderType } from './models/enums';
 export type { OrderStruct, WireOrder } from './signing/order';
 
 // ---------------------------------------------------------------------------
