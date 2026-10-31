@@ -17,6 +17,7 @@
 // ---------------------------------------------------------------------------
 
 export { type EnvironmentConfig, production } from './core/env';
+export type { Page, Paginated } from './core/paginated';
 export type { RequestOptions } from './core/requestOptions';
 export type { RateLimitUpdate } from './core/transport';
 export { SDK_VERSION } from './core/version';
@@ -36,6 +37,38 @@ export type { OrderbookCredential } from './signing/hmac';
 // Markets, events and the catalog
 // ---------------------------------------------------------------------------
 
+export {
+  FetchCollateralTokensError,
+  FetchPulseStatsError,
+  ListCategoriesError,
+  ListPulseMarketsError,
+  type ListPulseMarketsRequest,
+  ListSubcategoriesError,
+  type ListSubcategoriesRequest,
+} from './actions/catalog';
+export {
+  FetchEventError,
+  type FetchEventRequest,
+  FetchSeriesError,
+  type FetchSeriesRequest,
+  ListEventsError,
+  type ListEventsRequest,
+  ListSeriesError,
+  type ListSeriesRequest,
+  ListSubeventsError,
+  type ListSubeventsRequest,
+} from './actions/events';
+export {
+  FetchMarketError,
+  type FetchMarketRequest,
+  FetchMarketTradabilityError,
+  type FetchMarketTradabilityRequest,
+  ListBrowseItemsError,
+  type ListBrowseItemsRequest,
+  ListMarketsError,
+  type ListMarketsRequest,
+  type MarketTradability,
+} from './actions/markets';
 export type { TradableReason } from './markets/resolve';
 export type { BrowseEvent, BrowseItem } from './models/browse';
 export type {
@@ -72,6 +105,41 @@ export type { PulseMarket, PulseStats, PulseStatus } from './models/pulse';
 // Order books, prices and trades
 // ---------------------------------------------------------------------------
 
+export {
+  type AssetRequest,
+  type AssetsRequest,
+  type ConditionRequest,
+  FetchConvictionMarketError,
+  type FetchConvictionMarketRequest,
+  FetchLastTradePriceError,
+  type FetchLastTradePriceRequest,
+  FetchLastTradePricesError,
+  type FetchLastTradePricesRequest,
+  FetchMarketCapacityError,
+  type FetchMarketCapacityRequest,
+  FetchMidpointError,
+  type FetchMidpointRequest,
+  FetchMidpointsError,
+  type FetchMidpointsRequest,
+  FetchOrderBookError,
+  type FetchOrderBookRequest,
+  FetchOrderBooksError,
+  type FetchOrderBooksRequest,
+  FetchPriceError,
+  type FetchPriceRequest,
+  FetchPricesError,
+  type FetchPricesRequest,
+  FetchSpreadError,
+  type FetchSpreadRequest,
+  FetchSpreadsError,
+  type FetchSpreadsRequest,
+  FetchTradingStateError,
+  ListPriceHistoryError,
+  type ListPriceHistoryRequest,
+  ListTradesError,
+  type ListTradesRequest,
+  type SideInput,
+} from './actions/marketData';
 export type {
   ConvictionCommitment,
   ConvictionMarket,
@@ -117,6 +185,29 @@ export type { OrderStruct, WireOrder } from './signing/order';
 // The account and its positions
 // ---------------------------------------------------------------------------
 
+export {
+  AccountReadError,
+  FetchBalancesError,
+  type FetchMarketPnlRequest,
+  FetchPortfolioValueError,
+  type FetchPositionPnlRequest,
+  FetchProfileError,
+  FetchTradingApprovalsStateError,
+  FetchUserPnlError,
+  type FetchUserPnlRequest,
+  ListActivityError,
+  type ListActivityRequest,
+  ListApiKeysError,
+  ListPositionsError,
+  type ListPositionsRequest,
+  type SecureFetchUserStatsRequest,
+  type SecureListPositionsRequest,
+} from './actions/account';
+export {
+  FetchPublicProfileError,
+  FetchUserStatsError,
+  type UsernameRequest,
+} from './actions/profiles';
 export type {
   Activity,
   ActivityType,
@@ -167,6 +258,34 @@ export type {
 // Liquidity rewards
 // ---------------------------------------------------------------------------
 
+export {
+  FetchMarketRewardsEpochError,
+  type FetchMarketRewardsEpochRequest,
+  FetchMarketRewardsError,
+  type FetchMarketRewardsRequest,
+  FetchRewardGroupError,
+  type FetchRewardGroupRequest,
+  FetchRewardsLeaderboardStandingError,
+  type FetchRewardsLeaderboardStandingRequest,
+  FetchUserRewardsEpochError,
+  type FetchUserRewardsEpochRequest,
+  FetchUserRewardsError,
+  type FetchUserRewardsRequest,
+  ListMarketRewardsMakersError,
+  type ListMarketRewardsMakersRequest,
+  ListMarketRewardsOrdersError,
+  type ListMarketRewardsOrdersRequest,
+  ListRewardGroupsError,
+  type ListRewardGroupsRequest,
+  ListRewardPoolsError,
+  ListRewardsLeaderboardError,
+  type ListRewardsLeaderboardRequest,
+  ListUserRewardsOrdersError,
+  type ListUserRewardsOrdersRequest,
+  type SecureFetchUserRewardsEpochRequest,
+  type SecureFetchUserRewardsRequest,
+  type SecureListUserRewardsOrdersRequest,
+} from './actions/rewards';
 export type {
   MarketRewardsDetails,
   MarketRewardsEpoch,
