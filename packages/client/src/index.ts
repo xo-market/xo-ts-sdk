@@ -37,11 +37,54 @@ export type { OrderbookCredential } from './signing/hmac';
 // ---------------------------------------------------------------------------
 
 export type { TradableReason } from './markets/resolve';
+export type { BrowseEvent, BrowseItem } from './models/browse';
+export type {
+  Category,
+  CollateralToken,
+  Subcategory,
+} from './models/catalog';
+export type {
+  Event,
+  EventCreator,
+  EventMetrics,
+  EventSchedule,
+  Series,
+} from './models/event';
+export type {
+  Market,
+  MarketEvent,
+  MarketFeeSchedule,
+  MarketFeeSplit,
+  MarketMetrics,
+  MarketOutcome,
+  MarketOutcomes,
+  MarketResolution,
+  MarketRewards,
+  MarketRewardsProgramme,
+  MarketState,
+  MarketStatus,
+  MarketTag,
+  MarketTrading,
+} from './models/market';
+export type { PulseMarket, PulseStats, PulseStatus } from './models/pulse';
 
 // ---------------------------------------------------------------------------
 // Order books, prices and trades
 // ---------------------------------------------------------------------------
 
+export type {
+  ConvictionCommitment,
+  ConvictionMarket,
+  ConvictionOutcome,
+  LastTradePrice,
+  LastTradePriceForAsset,
+  MarketCapacity,
+  MarketTrade,
+  PositionCapacity,
+  PricePoint,
+  PricesBySide,
+} from './models/marketData';
+export type { OrderBook, PriceLevel } from './models/orderBook';
 export type { TradingState } from './orderbook/schemas';
 
 // ---------------------------------------------------------------------------
@@ -71,6 +114,34 @@ export type {
 export type { OrderStruct, WireOrder } from './signing/order';
 
 // ---------------------------------------------------------------------------
+// The account and its positions
+// ---------------------------------------------------------------------------
+
+export type {
+  Activity,
+  ActivityType,
+  ApiKey,
+  Balances,
+  MarketPnl,
+  PortfolioValue,
+  Position,
+  PositionBalance,
+  PositionPnl,
+  PositionStatus,
+  Profile,
+  ProfileBadge,
+  ProfilePoints,
+  ProfileSocials,
+  PublicProfile,
+  RedemptionResult,
+  TradingApprovalsState,
+  TransactionHandle,
+  TransactionReceiptSummary,
+  UserPnl,
+  UserStats,
+} from './models/account';
+
+// ---------------------------------------------------------------------------
 // Deposits and withdrawals
 // ---------------------------------------------------------------------------
 
@@ -78,6 +149,79 @@ export type {
   VerificationRequest,
   VerifyCallback,
 } from './bridge/verification';
+export type {
+  BridgeAmount,
+  BridgeAsset,
+  BridgeDeposit,
+  BridgeDirection,
+  BridgeFees,
+  BridgePayment,
+  BridgePaymentStatus,
+  BridgeVerificationItem,
+  BridgeWithdrawal,
+  DepositQuote,
+  WithdrawalQuote,
+} from './models/bridge';
+
+// ---------------------------------------------------------------------------
+// Liquidity rewards
+// ---------------------------------------------------------------------------
+
+export type {
+  MarketRewardsDetails,
+  MarketRewardsEpoch,
+  RewardAmount,
+  RewardBonus,
+  RewardCurrency,
+  RewardDayStatus,
+  RewardGroup,
+  RewardGroupProduct,
+  RewardInactiveReason,
+  RewardLifetime,
+  RewardPayoutStatus,
+  RewardPool,
+  RewardPoolMarket,
+  RewardProgramme,
+  RewardProgrammeStatus,
+  RewardsDay,
+  RewardsEpochRail,
+  RewardsLeaderboardEntry,
+  RewardsLeaderboardStanding,
+  RewardsMaker,
+  RewardsOrder,
+  RewardsOrderExit,
+  RewardsUserProfile,
+  RewardTerms,
+  UserCpRewards,
+  UserRewards,
+  UserRewardsDay,
+  UserRewardsEpoch,
+  UserRewardsEpochMarket,
+  UserRewardsTotal,
+  UserUsdcRewards,
+} from './models/rewards';
+
+// ---------------------------------------------------------------------------
+// Realtime
+// ---------------------------------------------------------------------------
+
+export type {
+  ActivityEvent,
+  LastTradePriceEvent,
+  MarketBookEvent,
+  MarketTopicEvent,
+  PortfolioEvent,
+  PriceChange,
+  PriceChangeEvent,
+  ReconnectedInfo,
+  SubscriptionEvent,
+  SubscriptionHandle,
+  SubscriptionTopic,
+  UserEvent,
+  UserOrderEvent,
+  UserOrderEventKind,
+  UserTradeEvent,
+} from './models/realtime';
 
 // ---------------------------------------------------------------------------
 // Errors: every class, and the type of the guards
