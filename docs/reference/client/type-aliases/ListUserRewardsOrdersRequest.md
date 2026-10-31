@@ -1,0 +1,59 @@
+# Type Alias: ListUserRewardsOrdersRequest
+
+```ts
+type ListUserRewardsOrdersRequest = object;
+```
+
+What [PublicClient.listUserRewardsOrders](../interfaces/PublicClient.md#listuserrewardsorders) takes.
+
+## Properties
+
+### conditionId?
+
+```ts
+optional conditionId?: string;
+```
+
+Only the orders of this market: its id on the order book, `0x` and 64 hex digits.
+
+***
+
+### epoch?
+
+```ts
+optional epoch?: number;
+```
+
+The UTC day: whole days since 1970-01-01, from 0 to 10,000,000. Without it the day in
+progress is listed.
+
+***
+
+### live?
+
+```ts
+optional live?: boolean;
+```
+
+Whether the day in progress also lists the resting orders that have not been scored yet.
+`false` lists the scored orders alone. On by default.
+
+***
+
+### pageSize?
+
+```ts
+optional pageSize?: number;
+```
+
+How many orders a page holds, from 1 to 1000.
+
+***
+
+### user
+
+```ts
+user: string;
+```
+
+The wallet whose orders to list: `0x` and 40 hex digits.

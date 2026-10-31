@@ -1,0 +1,52 @@
+{
+  "$schema": "https://typedoc-plugin-markdown.org/schema.json",
+  "name": "@xomarket/client",
+  "entryPoints": [
+    "packages/client/src/index.ts",
+    "packages/client/src/node.ts",
+    "packages/client/src/signing/index.ts",
+    "packages/client/src/viem.ts"
+  ],
+  "tsconfig": "packages/client/tsconfig.json",
+  "out": "docs/reference",
+  "plugin": ["typedoc-plugin-markdown"],
+  "router": "member",
+  "readme": "none",
+  "entryFileName": "README.md",
+  "hidePageHeader": true,
+  "hideBreadcrumbs": true,
+  "useCodeBlocks": true,
+  "parametersFormat": "table",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "excludeExternals": true,
+  "disableSources": true,
+  "disableGit": true,
+  "sourceLinkTemplate": "",
+  "sort": ["kind", "alphabetical"],
+  "treatWarningsAsErrors": true,
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "rewrittenLink": true,
+    "notDocumented": true,
+    "unusedMergeModuleWith": true
+  },
+  "requiredToBeDocumented": [
+    "Class",
+    "Interface",
+    "Function",
+    "Variable",
+    "TypeAlias",
+    "Enum",
+    "Method",
+    "Accessor"
+  ],
+  "intentionallyNotExported": ["ACTIVITY_TYPES", "ORDER_REJECTION_CODES"],
+  "pageTitleTemplates": {
+    "index": "API reference",
+    "module": "{name}"
+  },
+  "excludeScopesInPaths": true
+}

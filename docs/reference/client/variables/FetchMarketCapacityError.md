@@ -1,0 +1,16 @@
+# Variable: FetchMarketCapacityError
+
+```ts
+FetchMarketCapacityError: ErrorGuard<
+  | XoError
+  | UserInputError
+  | RequestRejectedError
+  | RateLimitError
+  | TransportError
+  | TimeoutError
+  | RequestAbortedError
+  | UnexpectedResponseError
+| SigningError>;
+```
+
+The guard of FetchMarketCapacityError.
