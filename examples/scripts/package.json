@@ -1,0 +1,44 @@
+{
+  "name": "@xomarket/examples",
+  "description": "Runnable TypeScript examples of @xomarket/client, on mainnet",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "account:dashboard": "tsx src/dashboard.ts",
+    "account:setup": "tsx src/account-setup.ts",
+    "bridge:deposit": "tsx src/deposit.ts",
+    "fetch:market": "tsx src/fetch-market.ts",
+    "list:markets": "tsx src/list-markets.ts",
+    "market:book": "tsx src/order-book.ts",
+    "market:prices": "tsx src/market-prices.ts",
+    "order:create-limit": "tsx src/create-limit-order.ts",
+    "order:create-market": "tsx src/create-market-order.ts",
+    "order:place-and-cancel": "tsx src/place-and-cancel.ts",
+    "order:place-gtd": "tsx src/gtd-order.ts",
+    "orders:cancel-all": "tsx src/cancel-all.ts",
+    "orders:heartbeat": "tsx src/heartbeat.ts",
+    "orders:open": "tsx src/open-orders.ts",
+    "pagination": "tsx src/pagination.ts",
+    "positions:list": "tsx src/list-positions.ts",
+    "positions:redeem-all": "tsx src/redeem-all.ts",
+    "rewards:markets": "tsx src/rewards-markets.ts",
+    "smart-wallet:address": "tsx src/smart-wallet-address.ts",
+    "smart-wallet:create-order": "tsx src/smart-wallet.ts",
+    "stream:market": "tsx src/realtime-book.ts",
+    "usdc:transfer": "tsx src/transfer-usdc.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@xomarket/client": "workspace:*",
+    "viem": "2.57.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  }
+}
