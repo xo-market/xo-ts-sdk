@@ -7,15 +7,23 @@
 // returns or catch what it throws.
 
 /**
- * `@xomarket/client`: the universal entry of the SDK. Nothing here needs a Node builtin.
+ * `@xomarket/client`: the public client (`createPublicClient`), what its members take and
+ * return, the order enums, the environment, every error class and the guard of each
+ * member's errors. Nothing here needs a Node builtin.
  *
  * @module @xomarket/client
  */
 
 // ---------------------------------------------------------------------------
-// The environment and requests
+// The clients
 // ---------------------------------------------------------------------------
 
+export { isPublicClient } from './clients/guards';
+export {
+  createPublicClient,
+  type PublicClient,
+  type PublicClientOptions,
+} from './clients/public';
 export { type EnvironmentConfig, production } from './core/env';
 export type { Page, Paginated } from './core/paginated';
 export type { RequestOptions } from './core/requestOptions';
@@ -208,6 +216,10 @@ export {
   FetchUserStatsError,
   type UsernameRequest,
 } from './actions/profiles';
+export {
+  FetchSmartWalletAddressError,
+  type FetchSmartWalletAddressRequest,
+} from './actions/wallets';
 export type {
   Activity,
   ActivityType,
@@ -324,6 +336,18 @@ export type {
 // Realtime
 // ---------------------------------------------------------------------------
 
+export {
+  type ActivitySubscriptionSpec,
+  CloseSubscriptionsError,
+  type EventOf,
+  type ExactSpecs,
+  type MarketSubscriptionSpec,
+  type PortfolioSubscriptionSpec,
+  type PublicSubscriptionSpec,
+  SubscribeError,
+  type SubscriptionSpec,
+  type UserSubscriptionSpec,
+} from './actions/subscriptions';
 export type {
   ActivityEvent,
   LastTradePriceEvent,
