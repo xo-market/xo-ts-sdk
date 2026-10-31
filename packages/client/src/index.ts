@@ -33,10 +33,35 @@ export type {
 export type { OrderbookCredential } from './signing/hmac';
 
 // ---------------------------------------------------------------------------
+// Order books, prices and trades
+// ---------------------------------------------------------------------------
+
+export type { TradingState } from './orderbook/schemas';
+
+// ---------------------------------------------------------------------------
 // Orders
 // ---------------------------------------------------------------------------
 
 export { OrderSide, OrderType } from './models/enums';
+export type {
+  AcceptedOrderResponse,
+  BatchOperationResult,
+  CancelOrdersResponse,
+  OpenOrder,
+  OpenOrderStatus,
+  OrderPostStatus,
+  OrderRejectionCode,
+  OrderResponse,
+  ReconciledOrder,
+  RejectedOrderResponse,
+  SignedOrder,
+} from './models/orders';
+export type {
+  MakerOrder,
+  Trade,
+  TraderSide,
+  TradeStatus,
+} from './models/trades';
 export type { OrderStruct, WireOrder } from './signing/order';
 
 // ---------------------------------------------------------------------------
@@ -60,6 +85,11 @@ export {
   XoError,
   type XoErrorOptions,
 } from './core/errors';
+export {
+  BatchOpsIncompleteError,
+  BatchPlaceIncompleteError,
+  PlacementError,
+} from './orderbook/placement';
 
 // ---------------------------------------------------------------------------
 // Shared types
