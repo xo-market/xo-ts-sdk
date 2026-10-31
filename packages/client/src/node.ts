@@ -3,7 +3,7 @@
 
 /**
  * `@xomarket/client/node`: what needs a Node builtin: the file credential store
- * (`fileStore`).
+ * (`fileStore`) and the shutdown hooks.
  *
  * @module @xomarket/client/node
  */
@@ -14,5 +14,7 @@ export type {
   CredentialStore,
   StoredCredentials,
 } from './auth/store';
+// The one implementation, which is runtime-agnostic: the secure client installs it too.
+export { installShutdownHooks } from './core/shutdown';
 // Named by `StoredCredentials`, so a custom store can be typed from this entry alone.
 export type { OrderbookCredential } from './signing/hmac';
