@@ -1,0 +1,46 @@
+{
+  "name": "cancel-digests",
+  "description": "EIP-712 digests of the signed cancel messages (CancelOrder and CancelAll) under the same XO Market CLOB domain as orders. Encoding: orderId is a uint64 as a base-10 decimal string; marketId is a UTF-8 string, and the empty string means a global CancelAll; chainId is a JSON integer; exchange is a 0x-hex address (any case). expectedDigest is the full EIP-712 digest (0x1901 || domainSeparator || structHash), where structHash is keccak256(abi.encode(typeHash, orderId, keccak256(marketId))) for CancelOrder and keccak256(abi.encode(typeHash, keccak256(marketId))) for CancelAll. domain is the full EIP-712 domain the digest is computed under: it equals name \"XO Market CLOB\", version \"1\", inputs.chainId and the checksummed inputs.exchange, and no other domain field (no salt).",
+  "source": "Computed by the SDK and checked against an independent EIP-712 encoding (the domain separator and the struct hashed by hand with keccak256 and ABI encoding, without a typed-data library). That encoding's domain separator equals the mainnet CTFExchange's domainSeparator(). Unlike order.json, the digests themselves are not read from a contract.",
+  "domain": {
+    "name": "XO Market CLOB",
+    "version": "1",
+    "chainId": 3223,
+    "verifyingContract": "0x4bC5E872256D12E6017dfe466E04c867DC761B77"
+  },
+  "typeStrings": {
+    "CancelOrder": "CancelOrder(uint64 orderId,string marketId)",
+    "CancelAll": "CancelAll(string marketId)"
+  },
+  "inputs": {
+    "chainId": 3223,
+    "exchange": "0x4bC5E872256D12E6017dfe466E04c867DC761B77"
+  },
+  "cases": [
+    {
+      "name": "cancel-order-42-market-1",
+      "primaryType": "CancelOrder",
+      "message": {
+        "orderId": "42",
+        "marketId": "market-1"
+      },
+      "expectedDigest": "0x934960da3ca71d816a8a05930b703148d8c4ef2916a7b4e70fefa8f9804ee7a4"
+    },
+    {
+      "name": "cancel-all-global",
+      "primaryType": "CancelAll",
+      "message": {
+        "marketId": ""
+      },
+      "expectedDigest": "0x185290ed216b1399d72a04644b85a0e6fb4b00f8828e1ac00c5ea416eb05f542"
+    },
+    {
+      "name": "cancel-all-market-1",
+      "primaryType": "CancelAll",
+      "message": {
+        "marketId": "market-1"
+      },
+      "expectedDigest": "0x3df1fb4c202fde0d46b0fc59d1751bde76b9d4d4d906dcbea0354dc669277a41"
+    }
+  ]
+}

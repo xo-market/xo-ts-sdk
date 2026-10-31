@@ -1,0 +1,30 @@
+{
+  "name": "order-digest-deployed-exchange",
+  "description": "EIP-712 digest of one CTFExchange Order under the XO Market CLOB domain, exactly as the deployed exchange's hashOrder returns it. Encoding: salt, tokenId, makerAmount, takerAmount, expiration and nonce are base-10 decimal strings (they are uint256/uint128); chainId is a JSON integer; maker, signer, beneficiary and exchange are 0x-hex addresses (any case); identifier is 0x-hex bytes16; metadata is 0x-hex bytes32; side is 0 (BUY) or 1 (SELL); signatureType is 0 (EOA) or 3 (Kernel smart account). expectedDigest is the full EIP-712 digest (0x1901 || domainSeparator || structHash). domain is the full EIP-712 domain the digest is computed under: it equals name \"XO Market CLOB\", version \"1\", inputs.chainId and the checksummed inputs.exchange, and no other domain field (no salt).",
+  "source": "Read from the mainnet CTFExchange's hashOrder with a read-only call (cast call on chain 3223, the order passed with an empty signature) on 2026-10-30. The SDK's hashOrder gives the same digest, and the exchange's eip712Domain() returns exactly domain.",
+  "domain": {
+    "name": "XO Market CLOB",
+    "version": "1",
+    "chainId": 3223,
+    "verifyingContract": "0x4bC5E872256D12E6017dfe466E04c867DC761B77"
+  },
+  "typeString": "Order(uint256 salt,address maker,address signer,address beneficiary,uint256 tokenId,uint256 makerAmount,uint256 takerAmount,uint256 expiration,uint128 nonce,bytes16 identifier,bytes32 metadata,uint8 side,uint8 signatureType)",
+  "inputs": {
+    "chainId": 3223,
+    "exchange": "0x4bC5E872256D12E6017dfe466E04c867DC761B77",
+    "salt": "1",
+    "maker": "0x00000000000000000000000000000000000000a1",
+    "signer": "0x00000000000000000000000000000000000000a1",
+    "beneficiary": "0x00000000000000000000000000000000000000b2",
+    "tokenId": "4660",
+    "makerAmount": "500",
+    "takerAmount": "1000",
+    "expiration": "0",
+    "nonce": "9",
+    "identifier": "0xdeadbeef000000000000000000000011",
+    "metadata": "0x00000000000000000000000000000000000000000000000000000000000000ff",
+    "side": 0,
+    "signatureType": 0
+  },
+  "expectedDigest": "0x7888da24d7e5af54e92846246e411c3edd1a7ae16bd64b59824130a212c5bf9f"
+}

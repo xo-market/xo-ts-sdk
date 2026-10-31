@@ -1,0 +1,64 @@
+{
+  "name": "kernel-v3.1",
+  "description": "Golden values for the Kernel v3.1 smart account (ERC-4337 / ERC-7579 account, used as the XO Market signatureType 3 trading mode). createAccount: the counterfactual account address for an owner, as the Kernel factory returns it for factory.createAccount(initialize(0x01 || ecdsaValidator, address(0), owner, 0x, []), bytes32(index)); the calldata selector is createAccount(bytes,bytes32) = 0xea6d13ac, and expectedCalldata is the full calldata for index 0 (the inner initialize selector is 0x3c3b752b; the hook is address(0); validatorData is the 20-byte owner address; hookData is empty; initConfig is empty). owner and index are an address and a base-10 decimal string (index is the uint256 salt). wrap: the ERC-1271 digest a Kernel account checks. Kernel does not verify the raw hash: it wraps it as the EIP-712 struct Kernel(bytes32 hash) under the domain { name \"Kernel\", version \"0.3.1\", chainId, verifyingContract: account }, and the owner signs the resulting digest (0x1901 || domainSeparator || structHash). wrap.inputs.hash is the order digest from order.json; chainId is a JSON integer; account is any 0x-hex address (a placeholder, not a deployed account); expectedDigest is the full EIP-712 digest of the wrap. The wrap domain has no salt. execute: the calldata of the account's ERC-7579 execute(bytes32 mode, bytes executionCalldata), selector 0xe9ae5c53. Each case lists its calls (to is any-case 0x-hex; value is a base-10 decimal string, uint256; data is even-length 0x-hex) and expectedCalldata. One call (single) uses mode 0x00 followed by 31 zero bytes and executionCalldata = to (20 bytes) || value (32 bytes, big-endian) || data. Two or more calls (batch) use mode 0x01 followed by 31 zero bytes and executionCalldata = abi.encode((address target, uint256 value, bytes callData)[]). expectedCalldata is lower-case hex. signature: the Kernel signature for the root validator, 0x00 || the 65-byte r || s || v ECDSA signature, 66 bytes in all; ecdsa here is a fixed byte pattern (r = 32 bytes of 0x11, s = 32 bytes of 0x22, v = 0x1b), not a real signature, because the encoding does not look inside it.",
+  "source": "createAccount.expectedAccount: the answer of the mainnet Kernel factory (0xaac5D4240AF87249B3f71BC8E4A2cae074A3E419, chain 3223) to a read-only eth_call (cast call) of exactly createAccount.expectedCalldata on 2026-10-30; the same call with index 1 returns a different account. The counterfactual address does not depend on the chain. createAccount.expectedCalldata: output of the SDK's kernelCreateAccountCalldata, verified by that call. wrap.expectedDigest: computed by the SDK (viem 2.57.7 hashTypedData) for chain 3223 and checked against an independent EIP-712 encoding (the domain separator and the struct hashed by hand with keccak256 and ABI encoding, without a typed-data library); the TypeScript test also recomputes it by hand. execute.single.expectedCalldata, execute.batch.expectedCalldata and signature.expectedSignature: computed with viem 2.57.7 by a hand-written construction (concat, pad and encodeAbiParameters, not the SDK function), and the TypeScript test checks that the SDK function gives the same bytes. They do not depend on the chain, and no contract was called for them.",
+  "createAccount": {
+    "factory": "0xaac5D4240AF87249B3f71BC8E4A2cae074A3E419",
+    "ecdsaValidator": "0x845ADb2C711129d4f3966735eD98a9F09fC4cE57",
+    "owner": "0x14791697260E4c9A71f18484C9f997B308e59325",
+    "index": "0",
+    "selector": "0xea6d13ac",
+    "expectedCalldata": "0xea6d13ac0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001243c3b752b01845adb2c711129d4f3966735ed98a9f09fc4ce570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000001414791697260e4c9a71f18484c9f997b308e593250000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "expectedAccount": "0xEc4222650Aae70681B8e89447D8Cf607c1851a1b"
+  },
+  "wrap": {
+    "domain": {
+      "name": "Kernel",
+      "version": "0.3.1",
+      "chainId": 3223,
+      "verifyingContract": "0x00000000000000000000000000000000000000C3"
+    },
+    "typeStrings": {
+      "EIP712Domain": "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)",
+      "Kernel": "Kernel(bytes32 hash)"
+    },
+    "inputs": {
+      "hash": "0x7888da24d7e5af54e92846246e411c3edd1a7ae16bd64b59824130a212c5bf9f",
+      "account": "0x00000000000000000000000000000000000000c3",
+      "chainId": 3223
+    },
+    "expectedDigest": "0x590af1e0825a5535a426120ad2614c5948d3ecf1ec40ba44925cb06016ee2d40"
+  },
+  "execute": {
+    "selector": "0xe9ae5c53",
+    "single": {
+      "calls": [
+        {
+          "to": "0x00000000000000000000000000000000000000d4",
+          "value": "1",
+          "data": "0xdeadbeef"
+        }
+      ],
+      "expectedCalldata": "0xe9ae5c5300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000003800000000000000000000000000000000000000d40000000000000000000000000000000000000000000000000000000000000001deadbeef0000000000000000"
+    },
+    "batch": {
+      "calls": [
+        {
+          "to": "0x00000000000000000000000000000000000000d4",
+          "value": "1",
+          "data": "0xdeadbeef"
+        },
+        {
+          "to": "0x00000000000000000000000000000000000000e5",
+          "value": "0",
+          "data": "0x"
+        }
+      ],
+      "expectedCalldata": "0xe9ae5c530100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000001a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000000d4000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000004deadbeef0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "signature": {
+    "ecdsa": "0x111111111111111111111111111111111111111111111111111111111111111122222222222222222222222222222222222222222222222222222222222222221b",
+    "expectedSignature": "0x00111111111111111111111111111111111111111111111111111111111111111122222222222222222222222222222222222222222222222222222222222222221b"
+  }
+}

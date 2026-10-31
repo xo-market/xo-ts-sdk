@@ -1,0 +1,31 @@
+{
+  "name": "clob-auth-l1",
+  "description": "L1 auth for the XO orderbook gateway: an EIP-712 ClobAuth signature from the wallet, sent as the headers XO_ADDRESS, XO_SIGNATURE, XO_TIMESTAMP and XO_NONCE to create or derive the L2 API credentials. The domain has NO verifyingContract and NO salt: it is exactly EIP712Domain(string name,string version,uint256 chainId) with name \"ClobAuthDomain\", version \"1\" and chainId from inputs.chainId. The signed struct is ClobAuth(address address,string timestamp,uint256 nonce,string message), where message is the constant in this file's `message` field. Encoding: privateKey is 0x-hex (32 bytes); address is the checksummed address of that key; timestamp is unix seconds as a decimal string (the gateway allows a skew of 120 seconds); nonce is a base-10 decimal string (uint256); chainId is a JSON integer. expectedDigest is the full EIP-712 digest (0x1901 || domainSeparator || structHash). expectedSignature is the 65-byte r || s || v signature of that digest; it is deterministic (RFC 6979), so signing again with the same key gives the same bytes. expectedHeaders is what the L1 header builder emits for these inputs: XO_NONCE is the nonce in decimal.",
+  "source": "Computed by the SDK (viem 2.57.7 hashTypedData and signTypedData) for chain 3223 and checked against an independent EIP-712 encoding (the domain separator and the struct hashed by hand with keccak256 and ABI encoding, without a typed-data library). expectedSignature was also produced by Foundry's cast wallet sign --no-hash over expectedDigest with the vector key, which gives the same bytes. The TypeScript test recomputes the digest with a hand-written keccak256 version of the gateway algorithm.",
+  "domain": {
+    "name": "ClobAuthDomain",
+    "version": "1",
+    "chainId": 3223
+  },
+  "typeStrings": {
+    "EIP712Domain": "EIP712Domain(string name,string version,uint256 chainId)",
+    "ClobAuth": "ClobAuth(address address,string timestamp,uint256 nonce,string message)"
+  },
+  "message": "This message attests that I control the given wallet",
+  "inputs": {
+    "privateKey": "0x0123456789012345678901234567890123456789012345678901234567890123",
+    "privateKeyNote": "test-only pattern key — never fund",
+    "address": "0x14791697260E4c9A71f18484C9f997B308e59325",
+    "timestamp": "1700000000",
+    "nonce": "0",
+    "chainId": 3223
+  },
+  "expectedDigest": "0x6cb12d8ea4fc3b126625e0e061278290498e58a1768951704d36ff7652eca7bb",
+  "expectedSignature": "0x17cf480fb0df7ca829e421de558b734231365c4f3d2f9ecf43b3a660237d19db526f639b1227b5fbbf4eab1e1991635189b1661c71600dc9370057ca33f6025b1b",
+  "expectedHeaders": {
+    "XO_ADDRESS": "0x14791697260E4c9A71f18484C9f997B308e59325",
+    "XO_SIGNATURE": "0x17cf480fb0df7ca829e421de558b734231365c4f3d2f9ecf43b3a660237d19db526f639b1227b5fbbf4eab1e1991635189b1661c71600dc9370057ca33f6025b1b",
+    "XO_TIMESTAMP": "1700000000",
+    "XO_NONCE": "0"
+  }
+}

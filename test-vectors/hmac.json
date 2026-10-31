@@ -1,0 +1,52 @@
+{
+  "name": "orderbook-l2-hmac",
+  "description": "L2 request signatures for the XO orderbook gateway (headers XO_API_KEY, XO_PASSPHRASE, XO_TIMESTAMP, XO_SIGNATURE). Algorithm: signature = urlSafeBase64(HMAC-SHA256(base64Decode(secret), timestamp + METHOD + path + body)). The message is the plain concatenation of four strings with no separator: timestamp is unix seconds as a decimal string, METHOD is the HTTP method upper-cased, path is the request path WITHOUT the query string or fragment (for example /data/orders, never /data/orders?market=0xabc), and body is the exact request body string (the empty string for a request without a body). URL-safe base64 means the standard alphabet with + replaced by - and / replaced by _; the = padding is KEPT, so the output is always 44 characters. The secret is issued as URL-safe base64, 44 characters, = padded, and decodes to 32 bytes. A secret in the standard alphabet (+ /), or with the padding removed, decodes to the same bytes and so gives the same signature. Any character outside the base64 and base64url alphabets, or an impossible length, makes the secret invalid; it is never silently repaired. Encoding of this file: every value is a JSON string. cases[] use inputs.secret; alphabetCase carries one secret in four spellings of the same 32 bytes. utf8Case pins that the message is encoded as UTF-8, not Latin-1: its body has one non-ASCII character, and a UTF-8 and a Latin-1 encoding of the message give different signatures.",
+  "source": "The L2 HMAC of the XO orderbook gateway. cases[] were computed by the TypeScript SDK on 2026-10-16; every expectedSignature in this file was cross-checked with an independent implementation (Node crypto.createHmac, Buffer base64, then + to - and / to _). utf8Case was cross-checked with Python (hmac and hashlib over the UTF-8 and over the Latin-1 bytes of the message) and again with Node crypto.createHmac. None of these values depends on the chain.",
+  "inputs": {
+    "secret": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+    "secretNote": "Test-only secret: the bytes 0x01 to 0x20. Not an issued credential.",
+    "timestamp": "1700000000"
+  },
+  "cases": [
+    {
+      "name": "post-order-with-body",
+      "method": "POST",
+      "path": "/order",
+      "body": "{\"orderType\":\"GTC\"}",
+      "expectedSignature": "mXTyqZIKrrRV6m4jI6idys8pP4JGAbqM4Tz_h03OzKE="
+    },
+    {
+      "name": "get-data-orders-empty-body",
+      "method": "GET",
+      "path": "/data/orders",
+      "body": "",
+      "expectedSignature": "cWjSF5U2YLNb6qSF8S80GOJ9vfJctZsDkn689HLWwLU="
+    }
+  ],
+  "alphabetCase": {
+    "name": "secret-alphabets",
+    "description": "One 32-byte secret (hex fbf8b0fae21d154cc3c0f8a2aa655d148b88c06a72ada5dc535008523af5eda4) in four spellings. Its standard base64 contains both + and /, so the spellings differ. All four must give the same signature.",
+    "secrets": {
+      "standardPadded": "+/iw+uIdFUzDwPiiqmVdFIuIwGpyraXcU1AIUjr17aQ=",
+      "standardUnpadded": "+/iw+uIdFUzDwPiiqmVdFIuIwGpyraXcU1AIUjr17aQ",
+      "urlSafePadded": "-_iw-uIdFUzDwPiiqmVdFIuIwGpyraXcU1AIUjr17aQ=",
+      "urlSafeUnpadded": "-_iw-uIdFUzDwPiiqmVdFIuIwGpyraXcU1AIUjr17aQ"
+    },
+    "timestamp": "1700000000",
+    "method": "POST",
+    "path": "/order",
+    "body": "{\"orderType\":\"GTC\"}",
+    "expectedSignature": "xmg_fn67NMs0US2Qih-ztoK1Fjtj8PNsFn_sbEVa39I="
+  },
+  "utf8Case": {
+    "name": "utf8-body",
+    "description": "The body {\"a\":\"\u00e9\"} holds U+00E9, which is the two bytes c3 a9 in UTF-8 and the single byte e9 in Latin-1. The message is always encoded as UTF-8 before it is signed. expectedSignature is the correct value. latin1WrongSignature is what an implementation gets if it encodes the message as Latin-1 (for example by taking the char code of each character as a byte): it is listed here only so a test can assert that the SDK does NOT produce it. A UTF-8 bug is easy to ship, because it only shows for a non-ASCII body.",
+    "secret": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+    "timestamp": "1700000000",
+    "method": "POST",
+    "path": "/order",
+    "body": "{\"a\":\"\u00e9\"}",
+    "expectedSignature": "m469MFIfn1fydFQe4wi3IyvHd65PDvH6cCH91yyamL8=",
+    "latin1WrongSignature": "e-9w0N6yUNHkMF0blAv0SiUt_a8NoeWu2D6GseMTvq8="
+  }
+}
