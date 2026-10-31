@@ -1,0 +1,9 @@
+packages:
+  - packages/*
+  - examples/*
+  - scripts
+
+# esbuild's postinstall only verifies the binary; the platform package from
+# optionalDependencies already provides it, so skip the script.
+ignoredBuiltDependencies:
+  - esbuild

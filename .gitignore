@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+
+# secrets and local state
+.env*
+!.env.example
+.xo/

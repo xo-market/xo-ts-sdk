@@ -1,0 +1,31 @@
+{
+  "name": "xo-sdk-monorepo",
+  "private": true,
+  "packageManager": "pnpm@10.33.4",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "pnpm -C packages/client typecheck",
+    "test": "pnpm -C packages/client test",
+    "build": "pnpm -C packages/client build",
+    "changeset": "changeset",
+    "release:version": "pnpm -C scripts release-version",
+    "docs:build": "typedoc",
+    "docs:publish": "pnpm -C scripts docs-publish",
+    "docs:check": "pnpm -C scripts reference-check && pnpm -C scripts docs-snippets && pnpm -C scripts error-codes && pnpm -C scripts docs-public-check && pnpm -C scripts docs-site check",
+    "docs:typecheck": "tsc -p docs/snippets"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@changesets/cli": "3.0.3",
+    "@types/node": "22.20.5",
+    "@xomarket/client": "workspace:*",
+    "typedoc": "0.28.20",
+    "typedoc-plugin-markdown": "4.13.1",
+    "typescript": "5.9.3",
+    "viem": "2.57.7"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@xomarket/sdk-scripts",
+  "private": true,
+  "description": "The SDK's own tooling: the docs checks, the public-content check and the release helpers (not for users)",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "docs-snippets": "tsx docs-snippets.ts",
+    "docs-public-check": "tsx docs-public-check.ts",
+    "public-check": "tsx public-check.ts",
+    "docs-site": "tsx docs-site.ts",
+    "docs-publish": "tsx docs-publish.ts",
+    "error-codes": "tsx error-codes.ts",
+    "reference-check": "tsx reference-check.ts",
+    "bun-smoke": "node bun-smoke.ts",
+    "release-version": "tsx release-version.ts"
+  },
+  "dependencies": {
+    "@xomarket/client": "workspace:*",
+    "viem": "2.57.7"
+  },
+  "devDependencies": {
+    "@mdx-js/mdx": "3.1.0",
+    "@types/node": "22.20.5",
+    "@types/ws": "8.18.2",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "4.1.12",
+    "ws": "8.21.3"
+  }
+}
