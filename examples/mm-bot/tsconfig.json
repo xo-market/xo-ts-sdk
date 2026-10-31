@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // As a Node project resolves the package: through its `exports`, so the types come from
+    // the built `dist` (run `pnpm -C packages/client build` first).
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"]
+  },
+  "include": ["*.ts"]
+}
