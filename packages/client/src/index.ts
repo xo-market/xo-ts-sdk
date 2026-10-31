@@ -4,7 +4,7 @@
 //
 // Explicit names only: never `export *`, and nothing marked `@internal` or from an
 // `internal.ts`. What is here is what a user names to create a client, call it, read what it
-// returns or catch what it throws.
+// returns or catch what it throws. `test/exports.test.ts` pins the names.
 
 /**
  * `@xomarket/client`: the two clients (`createPublicClient` and `createSecureClient`), what
