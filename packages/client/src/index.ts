@@ -7,9 +7,9 @@
 // returns or catch what it throws.
 
 /**
- * `@xomarket/client`: the public client (`createPublicClient`), what its members take and
- * return, the order enums, the environment, every error class and the guard of each
- * member's errors. Nothing here needs a Node builtin.
+ * `@xomarket/client`: the two clients (`createPublicClient` and `createSecureClient`), what
+ * their members take and return, the order enums, the environment, every error class and the
+ * guard of each member's errors. Nothing here needs a Node builtin.
  *
  * @module @xomarket/client
  */
@@ -18,12 +18,22 @@
 // The clients
 // ---------------------------------------------------------------------------
 
-export { isPublicClient } from './clients/guards';
+export { isPublicClient, isSecureClient } from './clients/guards';
 export {
   createPublicClient,
   type PublicClient,
   type PublicClientOptions,
 } from './clients/public';
+export {
+  CreateSecureClientError,
+  createSecureClient,
+  EndAuthenticationError,
+  ExportCredentialsError,
+  RotateCredentialsError,
+  type SecureClient,
+  type SecureClientOptions,
+  type WalletCredentials,
+} from './clients/secure';
 export { type EnvironmentConfig, production } from './core/env';
 export type { Page, Paginated } from './core/paginated';
 export type { RequestOptions } from './core/requestOptions';
@@ -168,6 +178,45 @@ export type { TradingState } from './orderbook/schemas';
 // Orders
 // ---------------------------------------------------------------------------
 
+export {
+  type BatchOperation,
+  CancelAllError,
+  CancelMarketOrdersError,
+  type CancelMarketOrdersRequest,
+  CancelOrderError,
+  type CancelOrderRequest,
+  CancelOrdersError,
+  type CancelOrdersRequest,
+  CreateLimitOrderError,
+  type CreateLimitOrderRequest,
+  CreateMarketOrderError,
+  type CreateMarketOrderRequest,
+  FetchAccountTradeError,
+  type FetchAccountTradeRequest,
+  FetchOrderError,
+  type FetchOrderRequest,
+  ListAccountTradesError,
+  type ListAccountTradesRequest,
+  ListOpenOrdersError,
+  type ListOpenOrdersRequest,
+  type MarketBuyOrderRequest,
+  type MarketSellOrderRequest,
+  type OrderHeartbeat,
+  type OrderHeartbeatResponse,
+  PlaceLimitOrderError,
+  type PlaceLimitOrderRequest,
+  PlaceMarketOrderError,
+  type PlaceMarketOrderRequest,
+  PostOrderBatchError,
+  type PostOrderBatchRequest,
+  PostOrderError,
+  PostOrdersError,
+  ReconcileOrderError,
+  type ReconcileOrderRequest,
+  SendOrderHeartbeatError,
+  StartOrderHeartbeatError,
+  type StartOrderHeartbeatRequest,
+} from './actions/trading';
 export { OrderSide, OrderType } from './models/enums';
 export type {
   AcceptedOrderResponse,
@@ -213,6 +262,17 @@ export {
   type SecureListPositionsRequest,
 } from './actions/account';
 export {
+  MergePositionsError,
+  type MergePositionsRequest,
+  OnchainSendError,
+  RedeemAllPositionsError,
+  RedeemPositionsError,
+  type RedeemPositionsRequest,
+  SetupTradingApprovalsError,
+  TransferErc20Error,
+  type TransferErc20Request,
+} from './actions/onchain';
+export {
   FetchPublicProfileError,
   FetchUserStatsError,
   type UsernameRequest,
@@ -249,6 +309,28 @@ export type {
 // Deposits and withdrawals
 // ---------------------------------------------------------------------------
 
+export {
+  type BridgePaymentRequest,
+  BridgeReadError,
+  BridgeSendError,
+  CreateDepositError,
+  type CreateDepositRequest,
+  FetchBridgePaymentError,
+  ListBridgeAssetsError,
+  type ListBridgeAssetsRequest,
+  ListBridgePaymentsError,
+  type ListBridgePaymentsRequest,
+  QuoteDepositError,
+  type QuoteDepositRequest,
+  QuoteWithdrawalError,
+  type QuoteWithdrawalRequest,
+  VerifyBridgePaymentError,
+  type VerifyBridgePaymentRequest,
+  WaitForBridgePaymentError,
+  type WaitForBridgePaymentOptions,
+  WithdrawError,
+  type WithdrawRequest,
+} from './actions/bridge';
 export type {
   VerificationRequest,
   VerifyCallback,
