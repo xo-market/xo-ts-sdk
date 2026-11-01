@@ -1,0 +1,137 @@
+name: Backend route coverage
+
+# Every week, and on demand: does the data client still account for every public or shared route
+# of the backend, in every area? The script reads the "Route index" of the backend's route
+# registry (a Markdown file) and compares it with packages/client/src/data/coverage.ts. A route
+# the map has no decision for, a route skipped as frontend-only that is open now, a route the
+# registry no longer lists, a covered route that is not public or shared any more (an API key
+# would get 401 or 403 on it), or a covered route that flipped between public and shared (the
+# client calls it with the other access: no key where one is needed now, or a key where none is)
+# makes the run fail, and opens (or updates) the issue "Backend route coverage drift", with a
+# section for each; a later clean run closes it. The issue steps run on main only, so a manual
+# run on another branch never touches the issue.
+#
+# This check is off until it is switched on. It needs four repository secrets: three that say
+# where the registry is, and the token that reads it.
+#   ROUTE_REGISTRY_REPO   the repository that holds the registry, as owner/name
+#   ROUTE_REGISTRY_REF    its branch, tag or commit (leave it out for main)
+#   ROUTE_REGISTRY_PATH   the registry file in that repository
+#   ROUTE_REGISTRY_TOKEN  a token with read access to the contents of that repository
+# They are secrets, not variables, so the logs of this public repository never show where the
+# registry is: GitHub masks a secret in the logs, and the script never prints the location, only
+# the names of these variables. (Do not set ROUTE_REGISTRY_REF to a common word like main: GitHub
+# would mask that word in every log line.)
+#
+# The switch is the repository variable ROUTE_CHECK_ENABLED. While it is not "true" the job is
+# skipped (the run is not a failure), so a scheduled run does nothing. Once it is "true", a
+# missing secret fails the run with a message that says which, and no issue is opened.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+# Two runs at once could both open the issue: a second run waits for the first.
+concurrency:
+  group: route-coverage
+  cancel-in-progress: false
+
+jobs:
+  coverage:
+    name: Route index against the coverage map
+    # Skipped until the check is switched on (see the top of this file).
+    if: ${{ vars.ROUTE_CHECK_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ISSUE_TITLE: Backend route coverage drift
+    steps:
+      # Every action is pinned by its full commit SHA (the tag in the comment), as in the other
+      # workflows.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # pnpm version is read from "packageManager" in the root package.json.
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The registry location and token are in this step's environment only, as secrets. The
+      # script fetches the file with `gh api` from the place the three variables name and exits 0
+      # (up to date), 1 (drift) or 2 (it could not run: a variable or the token is missing, the
+      # fetch failed, the file did not parse). It never prints the location. The report is written
+      # for 0 and 1.
+      - name: Compare the route index with the coverage map
+        id: check
+        env:
+          ROUTE_REGISTRY_REPO: ${{ secrets.ROUTE_REGISTRY_REPO }}
+          ROUTE_REGISTRY_REF: ${{ secrets.ROUTE_REGISTRY_REF }}
+          ROUTE_REGISTRY_PATH: ${{ secrets.ROUTE_REGISTRY_PATH }}
+          GH_TOKEN: ${{ secrets.ROUTE_REGISTRY_TOKEN }}
+        run: |
+          report="${RUNNER_TEMP}/route-coverage.md"
+          status=0
+          pnpm -C packages/client route-coverage --report "${report}" || status=$?
+          echo "status=${status}" >> "${GITHUB_OUTPUT}"
+          if [ "${status}" -gt 1 ]; then
+            exit "${status}"
+          fi
+          if [ ! -s "${report}" ]; then
+            echo "::error::The check wrote no report: it did not run."
+            exit 1
+          fi
+          cat "${report}" >> "${GITHUB_STEP_SUMMARY}"
+
+      # No secret in this step. The body is the report, with the run it came from.
+      - name: Open or update the drift issue
+        if: steps.check.outputs.status == '1' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          body="${RUNNER_TEMP}/issue-body.md"
+          {
+            cat "${RUNNER_TEMP}/route-coverage.md"
+            echo
+            echo "Run: ${RUN_URL} (commit ${GITHUB_SHA})"
+          } > "${body}"
+          number="$(gh issue list --state open --search "\"${ISSUE_TITLE}\" in:title" \
+            --json number,title --jq "map(select(.title == \"${ISSUE_TITLE}\")) | .[0].number // empty")"
+          if [ -n "${number}" ]; then
+            gh issue edit "${number}" --body-file "${body}"
+          else
+            gh issue create --title "${ISSUE_TITLE}" --body-file "${body}"
+          fi
+
+      # A clean run closes the issue a drifting one opened. No secret here either.
+      - name: Close the drift issue
+        if: steps.check.outputs.status == '0' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          number="$(gh issue list --state open --search "\"${ISSUE_TITLE}\" in:title" \
+            --json number,title --jq "map(select(.title == \"${ISSUE_TITLE}\")) | .[0].number // empty")"
+          if [ -n "${number}" ]; then
+            gh issue comment "${number}" --body "Up to date again: ${RUN_URL} (commit ${GITHUB_SHA})"
+            gh issue close "${number}"
+          fi
+
+      # Last, so the issue is updated first. A drift is a failed run, on every branch.
+      - name: Fail the run on drift
+        if: steps.check.outputs.status == '1'
+        run: |
+          echo "::error::The route index and the coverage map disagree: see the job summary."
+          exit 1
