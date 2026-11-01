@@ -1,8 +1,7 @@
-// Code that docs/quickstart.md quotes and that its examples run: type-checked, never run.
+// Code that docs/quickstart.md quotes, the same as in the example it runs: type-checked, never run.
 
 import type { PublicClient } from '@xomarket/client';
 
-/** Five open markets, each with its id: what list-markets.ts prints. */
 export async function listMarkets(client: PublicClient) {
   // #region list-markets
   const page = await client

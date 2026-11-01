@@ -46,8 +46,8 @@ Node 22 or later and pnpm 10. Commit messages are short and start with a type, a
 
 ## The shape of the public API
 
-The same rules are on the docs page [SDK direction](docs/sdk-direction.md), for the people who use
-the SDK. Keep the two in step.
+The same rules, with the reasons behind them, are in [SDK_DIRECTION.md](SDK_DIRECTION.md). Keep the
+two in step.
 
 - **Build the API around what the developer wants to do**, never around which backend service
   answers. A developer asks for markets, a book or an order; the services behind them do not

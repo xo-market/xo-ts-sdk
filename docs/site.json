@@ -28,11 +28,6 @@
           "source": "examples.md",
           "slug": "examples",
           "description": "Short scripts you can run, one task each."
-        },
-        {
-          "source": "sdk-direction.md",
-          "slug": "sdk-direction",
-          "description": "How the methods are named and shaped, and what stays the same."
         }
       ]
     },

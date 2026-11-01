@@ -2,8 +2,8 @@
 
 import {
   OrderSide,
-  OrderType,
   type SecureClient,
+  type SignedOrder,
   XoError,
 } from '@xomarket/client';
 
@@ -43,21 +43,15 @@ export async function placeGtd(
   tickSize: string,
 ) {
   // #region gtd-order
-  const expiration = new Date(Date.now() + 5 * 60_000);
   const placed = await client.placeLimitOrder({
     assetId,
     side: OrderSide.BUY,
     price: tickSize,
     size: '1',
-    postOnly: true,
-    expiration,
+    expiration: new Date(Date.now() + 5 * 60_000),
   });
-  console.log(
-    placed.ok
-      ? `${placed.status} until ${expiration.toISOString()}: ${placed.orderId}`
-      : `Refused (${placed.code}): ${placed.message}`,
-  );
   // #endregion gtd-order
+  return placed;
 }
 
 /** Buys YES with up to 1 USDC now, at the prices on the book: a real trade. */
@@ -67,34 +61,10 @@ export async function buyNow(client: SecureClient, assetId: string) {
     assetId,
     side: OrderSide.BUY,
     amount: '1',
-    orderType: OrderType.FAK,
   });
-  console.log(
-    result.ok
-      ? `${result.status}: spent ${result.makingAmount}, bought ${result.takingAmount}`
-      : `No fill (${result.code}): ${result.message}`,
-  );
+  console.log(result.ok ? result.status : result.code);
   // #endregion market-order
   return result;
-}
-
-/** Signs a limit order without sending it. */
-export async function signLimit(
-  client: SecureClient,
-  assetId: string,
-  tickSize: string,
-  minimumOrderSize: string,
-) {
-  // #region create-limit-order
-  const order = await client.createLimitOrder({
-    assetId,
-    side: OrderSide.BUY,
-    price: tickSize,
-    size: minimumOrderSize,
-    postOnly: true,
-  });
-  // #endregion create-limit-order
-  return order;
 }
 
 /** Signs two orders, then places them in one request. */
@@ -117,12 +87,9 @@ export async function placeMany(client: SecureClient, assetId: string) {
     }),
   ];
   const results = await client.postOrders(orders);
+
   for (const result of results) {
-    console.log(
-      result.ok
-        ? `${result.orderId}: ${result.status}`
-        : `${result.orderHash}: refused (${result.code})`,
-    );
+    console.log(result.ok ? result.status : result.code);
   }
   // #endregion post-orders
   return results;
@@ -131,30 +98,16 @@ export async function placeMany(client: SecureClient, assetId: string) {
 /** Cancels resting orders and places their replacement in one request. */
 export async function replaceOrders(
   client: SecureClient,
-  assetId: string,
   orderIds: string[],
+  order: SignedOrder,
 ) {
   // #region order-batch
-  const order = await client.createLimitOrder({
-    assetId,
-    side: OrderSide.BUY,
-    price: '0.41',
-    size: '5',
-    postOnly: true,
-  });
   const results = await client.postOrderBatch({
     operations: [
       { type: 'cancel', orderIds },
       { type: 'place', orders: [order] },
     ],
   });
-  for (const result of results) {
-    console.log(
-      result.type === 'cancel'
-        ? `canceled ${result.canceled.length}, not canceled ${Object.keys(result.notCanceled).length}`
-        : `placed ${result.orders.filter((placed) => placed.ok).length} of ${result.orders.length}`,
-    );
-  }
   // #endregion order-batch
   return results;
 }
@@ -162,23 +115,11 @@ export async function replaceOrders(
 /** The account's open orders, in every market. */
 export async function openOrders(client: SecureClient) {
   // #region open-orders
-  const rows = [];
-
   for await (const page of client.listOpenOrders()) {
-    rows.push(
-      ...page.items.map((order) => ({
-        orderId: order.orderId,
-        market: order.market,
-        order: `${order.side} ${order.outcome} @ ${order.price}`,
-        shares: order.originalSize,
-        filled: order.sizeMatched,
-        type: order.orderType,
-      })),
-    );
+    for (const order of page.items) {
+      console.log(`${order.side} ${order.originalSize} @ ${order.price}`);
+    }
   }
-
-  console.log(`${rows.length} open order(s)`);
-  console.table(rows);
   // #endregion open-orders
 }
 
@@ -191,15 +132,14 @@ export async function placeOnce(client: SecureClient, assetId: string) {
     price: '0.40',
     size: '5',
   });
+
   try {
     const placed = await client.postOrder(order);
-    console.log(
-      placed.ok ? `${placed.status}: ${placed.orderId}` : placed.code,
-    );
+    console.log(placed.ok ? placed.status : placed.code);
   } catch (error) {
     if (error instanceof XoError && error.mayHaveLanded) {
       const found = await client.reconcileOrder({ orderHash: order.orderHash });
-      console.log(`Never resend it. reconcileOrder says ${found.state}`);
+      console.log(`Do not place it again. It is ${found.state}`);
     }
     throw error;
   }

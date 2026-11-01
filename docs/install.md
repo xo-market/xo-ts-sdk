@@ -21,31 +21,32 @@ yarn add @xomarket/client viem
 bun add @xomarket/client viem
 ```
 
-The SDK runs on a server with Node 22 or later, or Bun. It does not run in the browser yet.
+Use Node 22 or later, or Bun. The SDK does not run in the browser yet.
 
-## Requirements
-
-- **viem 2.57.7 or later.** Install it next to the SDK so your project and the SDK share one copy.
-- **TypeScript.** Set `moduleResolution` to `NodeNext`, `Node16` or `Bundler`.
-- **ESM or CommonJS.** Both `import` and `require` work.
+Install viem 2.57.7 or later next to the SDK, so both share one copy. `import` and `require` both
+work. In TypeScript, set `moduleResolution` to `NodeNext`, `Node16` or `Bundler`.
 
 ## Entry points
 
 | Import | What it has |
 | --- | --- |
-| `@xomarket/client` | `createPublicClient`, `createSecureClient`, the enums, the errors and the types. Nothing in it needs Node. |
-| `@xomarket/client/viem` | `privateKey` and `signerFrom`, the signers for a private key or a viem account. |
+| `@xomarket/client` | The clients, enums, errors and types. |
+| `@xomarket/client/viem` | `privateKey` and `signerFrom`, to sign with a key or a viem account. |
 | `@xomarket/client/node` | `fileStore`, to keep credentials on disk, and `installShutdownHooks`. |
-| `@xomarket/client/signing` | Low-level order and login signing. You rarely need it. |
+| `@xomarket/client/signing` | Low-level signing. You rarely need it. |
 
 ## Keep your key safe
 
-Load your private key from a `.env` file that git ignores, or from a secrets manager. Never put
-it in your code or on the command line, where your shell history keeps it. The SDK never prints
-a key, not even in an error.
+Keep your key in a `.env` file that git ignores, or in a secrets manager. Never put it in
+your code or on the command line, where your shell history keeps it.
 
 <!-- snippet: none -->
 ```sh
 # .env
 XO_PK=0x...
 ```
+
+## Next steps
+
+- [Place your first order](quickstart.md)
+- [Read markets and prices](markets.md)
