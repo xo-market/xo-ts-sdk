@@ -1,0 +1,212 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "XO Market Docs",
+  "colors": {
+    "primary": "#FF87A6",
+    "light": "#FFB3C7",
+    "dark": "#E5527A"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Product",
+        "groups": [
+          {
+            "group": "Start here",
+            "icon": "compass",
+            "pages": [
+              "product/what-is-xo",
+              "product/quickstart",
+              "product/concepts/how-prices-work",
+              "product/concepts/market-catalog"
+            ]
+          },
+          {
+            "group": "Account and wallet",
+            "icon": "wallet",
+            "pages": [
+              "product/accounts/wallets",
+              "product/accounts/deposit",
+              "product/accounts/withdraw",
+              "product/accounts/transfer-states"
+            ]
+          },
+          {
+            "group": "Trading",
+            "icon": "chart-candlestick",
+            "pages": [
+              "product/trading/find-a-market",
+              "product/trading/read-the-rules",
+              "product/trading/place-an-order",
+              "product/trading/fees",
+              "product/trading/order-book-basics",
+              "product/trading/legacy-amm"
+            ]
+          },
+          {
+            "group": "Portfolio and settlement",
+            "icon": "chart-pie",
+            "pages": [
+              "product/portfolio/positions-and-pnl",
+              "product/portfolio/how-markets-resolve",
+              "product/portfolio/claim-payouts"
+            ]
+          },
+          {
+            "group": "Products",
+            "icon": "shapes",
+            "pages": [
+              "product/products/convictions",
+              "product/products/create-a-conviction",
+              "product/products/pulse",
+              "product/products/parlays",
+              "product/products/contest"
+            ]
+          },
+          {
+            "group": "Rewards",
+            "icon": "gift",
+            "pages": [
+              "product/rewards/conviction-points",
+              "product/rewards/liquidity-rewards",
+              "product/rewards/maker-rebates",
+              "product/rewards/referrals"
+            ]
+          },
+          {
+            "group": "Safety and help",
+            "icon": "life-ring",
+            "pages": [
+              "product/policies/risk-and-eligibility",
+              "product/help/troubleshooting",
+              "product/reference/glossary"
+            ]
+          },
+          {
+            "group": "Legal",
+            "icon": "scale-balanced",
+            "pages": [
+              "legal/terms-of-service",
+              "legal/privacy-policy"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting started",
+            "pages": [
+              "documentation/introduction"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "guides/smart-accounts",
+              "guides/order-types",
+              "guides/fees",
+              "guides/taker-delay",
+              "guides/market-lifecycle",
+              "guides/redeem-positions",
+              "guides/auto-cancellation",
+              "guides/trading-pause",
+              "guides/wire-conventions"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Orderbook API reference",
+        "openapi": {
+          "source": "api-reference/openapi.yaml",
+          "directory": "api-reference"
+        },
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/introduction",
+              "api-reference/authentication",
+              "api-reference/rate-limits"
+            ]
+          },
+          {
+            "group": "WebSockets",
+            "asyncapi": {
+              "source": "api-reference/asyncapi.yaml",
+              "directory": "api-reference/websockets"
+            }
+          }
+        ]
+      },
+      {
+        "tab": "Data API reference",
+        "openapi": {
+          "source": "data-api-reference/openapi.yaml",
+          "directory": "data-api-reference"
+        },
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "data-api-reference/introduction",
+              "data-api-reference/rate-limits",
+              "data-api-reference/liquidity-rewards"
+            ]
+          },
+          {
+            "group": "WebSocket",
+            "pages": [
+              "data-api-reference/portfolio-websocket"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "mailto:gm@xo.market"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Launch app",
+      "href": "https://beta.xo.market"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/xomarket",
+      "github": "https://github.com/xomarket"
+    }
+  },
+  "description": "Trade, create markets and build on XO Market.",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/product/what-is-xo"
+    }
+  ]
+}

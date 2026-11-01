@@ -1,0 +1,485 @@
+name: Release
+
+# Releases of @xomarket/client, with Changesets. The how-to for maintainers is RELEASING.md;
+# this header explains the jobs and the gates. NOTHING IS PUBLISHED BY DEFAULT, and a push
+# never publishes or writes anything: a push to main only reports what is pending. Versioning is
+# a maintainer's command (`pnpm release:version`), and publishing is a manual run of this workflow
+# on main.
+#
+# Canary/snapshot releases are not set up: only stable releases are published.
+#
+# HOW A RELEASE GOES
+#   1. A changeset lands on main (`pnpm changeset`). The push runs this workflow, and the version
+#      job notes in its summary which changesets are pending. It changes nothing.
+#   2. To release them, a maintainer runs `pnpm release:version` on an up-to-date main
+#      (scripts/release-version.ts): `changeset version` (the new version and CHANGELOG.md) on a
+#      branch release/<version>, pushed, with its pull request. Merge that pull request (squash).
+#      The next run reports, in its summary, that the new version is ready to publish, and does
+#      nothing more.
+#      Why not a bot: the xo-market GitHub organization lets GitHub Actions open no pull request, and
+#      forbids force-pushes on every branch, which is how changesets/action updates its branch.
+#      A token of a person or an app would get past the first rule, not the second.
+#   3. Open the release window: set the repository variable NPM_PUBLISH_ENABLED to "true".
+#   4. Actions > Release > Run workflow, on main, with `publish-version` set to the version in
+#      packages/client/package.json. The pack job checks it, builds and packs; the publish job
+#      waits for another reviewer's approval, then uploads the tarball to npm; the release-tag
+#      job tags the commit and creates the GitHub release. A dispatch that is still queued behind
+#      a push run can be cancelled by a later push to main (the concurrency group below keeps one
+#      pending run): just dispatch again.
+#   5. Close the window: delete NPM_PUBLISH_ENABLED.
+#
+# Five jobs:
+#   select-mode  Asks Changesets what this commit calls for: "version" (a changeset is pending),
+#                "publish" (none is pending, and the package version is not on npm yet) or
+#                "none". Read-only.
+#   version      Mode "version": lists the pending changesets in its summary and says to run
+#                `pnpm release:version`. Read-only.
+#   pack         Mode "publish", a manual run, all gates open: checks `publish-version`, builds,
+#                runs the release checks, packs the tarball and checks what is in it (its file
+#                list, and its content with the public-content check). Read-only, no environment,
+#                no secrets.
+#   publish      Same conditions: uploads that tarball to npm with trusted publishing (OIDC). The
+#                only job that holds id-token: write, and it has no write access to the repository.
+#   release-tag  After a publish: tags the commit `@xomarket/client@<version>` and creates the
+#                GitHub release from the changelog entry. The only job with contents: write, and
+#                it has no id-token. It can be re-run on its own.
+#
+# THE GATES. For `pack` and `publish` to run, ALL of these hold:
+#   1. The run is a manual one (workflow_dispatch) on refs/heads/main.
+#   2. The input `publish-version` equals the version in packages/client/package.json (checked in
+#      `pack`, so a typo costs nothing).
+#   3. The person who triggered the run (github.triggering_actor) is in the repository variable
+#      NPM_PUBLISHERS, which MUST be a JSON array of GitHub logins such as ["some-login"] (it must
+#      start with "["; matching is exact, apart from case). Unset, empty, invalid JSON, or a
+#      JSON value that is not an array (a string like "some-login", an object) means nobody: the `if`s
+#      check the "[", and an early step of `pack` re-checks the array and the exact match with jq.
+#   4. The repository variable NPM_PUBLISH_ENABLED is "true". GitHub compares strings without
+#      regard to case, so "TRUE" and "True" open it too. Set it for the release window only and
+#      delete it afterwards. It must be a repository (or organization) variable: a job's `if:` is
+#      evaluated before its environment applies, so an environment variable would not do.
+#   5. packages/client/package.json has a "license" field (MIT, with LICENSE in the repository
+#      root): `pack` and `publish` fail without one. `pnpm pack` copies the root LICENSE into the
+#      tarball.
+#   6. npm accepts the publish. The package belongs to the @xomarket organization, and its
+#      trusted publisher is this repository, the workflow file "release.yml" AND the environment
+#      "npm-release" (https://docs.npmjs.com/trusted-publishers; every field is exact and
+#      case-sensitive, and npm validates nothing when you save it). Do not leave the environment
+#      field empty: npm treats it as optional, but it is what holds the line when someone edits
+#      this file on a branch and dispatches it from there (gates 1, 3 and 4 live in this file, so
+#      such a copy can drop them). With the deployment branches of the environment "npm-release"
+#      set to "main" only, the branch run cannot enter the environment, and without the
+#      environment npm refuses its token. Create the environment and set that restriction BEFORE
+#      the first release: GitHub creates a missing environment, with no protection, on first use.
+#   7. Someone OTHER than the person who triggered the run approves it: "npm-release" has
+#      required reviewers with "Prevent self-review" ticked, so the triggering actor cannot
+#      approve, even as a reviewer. The reviewers must therefore include a second person (each
+#      reviewer approves the runs the other starts); NPM_PUBLISHERS may still hold one login.
+#      `publish` waits for that approval.
+#
+# THE TRUST BOUNDARY. The gates in this file (actor, window, version, license) bind only people who
+# cannot change release.yml on main. The organization's rules make every change to main go
+# through a pull request, but no review is required: whoever can merge to main can edit this file
+# there and drop them, and a main-branch copy passes the environment and npm checks above. So
+# either keep merge access to main limited to the people in NPM_PUBLISHERS, or add a ruleset on
+# main that requires Code Owner review: .github/CODEOWNERS names those people for .github/, the
+# Changesets config and the versioning script.
+#
+# NO NPM TOKEN, ANYWHERE. Publishing uses npm trusted publishing: the publish job proves its
+# identity with a short-lived OIDC token, so there is no NPM_TOKEN or NODE_AUTH_TOKEN to leak.
+#
+# Every action is pinned by its full commit SHA (the tag in the comment), as in the other
+# workflows: the publish job can publish under this package's name, so a moved tag must not
+# change what runs in it. The Changesets sub-actions are the v2 line, built for @changesets/cli
+# 3.x, and the split into select-mode, pack and publish is the one that its guide recommends for
+# trusted publishing (https://changesets.dev/guide/automating); versioning is done by hand (above).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      publish-version:
+        description: 'The version to publish: it must equal the version in packages/client/package.json'
+        required: true
+        type: string
+
+# Each job asks for what it needs.
+permissions: {}
+
+# Two releases at once would race on npm: a second run waits for the first, and a run that is
+# publishing is never cancelled.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  select-mode:
+    name: Select mode
+    # A manual run from another branch must never version or publish.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read # to check out the repository
+    outputs:
+      mode: ${{ steps.select-mode.outputs.mode }}
+      publish-plan-artifact-id: ${{ steps.select-mode.outputs.publish-plan-artifact-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # pnpm version is read from "packageManager" in the root package.json.
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      # No `cache:` in any job of this workflow: a poisoned cache must not reach a release.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          # No dependency cache in a release job (cache poisoning); setup-node v5+ may turn it on by
+          # itself from package.json, so it is off by name.
+          package-manager-cache: false
+
+      # The Changesets actions run the repository's own @changesets/cli, so it has to be installed.
+      - run: pnpm install --frozen-lockfile
+
+      - name: Select mode
+        id: select-mode
+        uses: changesets/action/select-mode@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+
+      - name: Say what happens next
+        env:
+          MODE: ${{ steps.select-mode.outputs.mode }}
+          EVENT: ${{ github.event_name }}
+          GATE: ${{ vars.NPM_PUBLISH_ENABLED == 'true' && 'open' || 'closed' }}
+        run: |
+          version="$(node -p "require('./packages/client/package.json').version")"
+          {
+            echo "- Changesets mode: \`$MODE\`. Version in the tree: \`$version\`."
+            echo "- Trigger: \`$EVENT\`. Publish gate \`NPM_PUBLISH_ENABLED\`: $GATE."
+            if [ "$MODE" = publish ] && [ "$EVENT" = push ]; then
+              echo "- Version \`$version\` is ready to publish. A push never publishes: run this workflow by hand on main with \`publish-version\` = \`$version\` (see RELEASING.md)."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  version:
+    name: Changesets pending
+    needs: select-mode
+    if: needs.select-mode.outputs.mode == 'version'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read # to list the pending changesets
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Only a note: versioning is `pnpm release:version`, run by a maintainer (see above).
+      - name: Say what is pending
+        run: |
+          pending="$(find .changeset -maxdepth 1 -name '*.md' ! -name 'README.md' -exec basename {} \; | sort)"
+          count="$(printf '%s\n' "$pending" | grep -c . || true)"
+          echo "::notice title=Changesets pending::${count} changeset(s) pending. To release them, run \`pnpm release:version\` on an up-to-date main."
+          {
+            echo "### ${count} changeset(s) pending"
+            echo
+            printf '%s\n' "$pending" | sed 's/^/- /'
+            echo
+            echo 'To release them, run `pnpm release:version` on an up-to-date main: it opens the release pull request. Merging it publishes nothing.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  pack:
+    name: Build and pack
+    needs: select-mode
+    # GATES 1, 3 and 4 (gate 2 is a step below). A push, someone who is not in NPM_PUBLISHERS,
+    # or NPM_PUBLISH_ENABLED not "true": this job and `publish` are skipped. The `startsWith`
+    # keeps a NPM_PUBLISHERS that is a JSON string ("some-login") from passing: `contains` would
+    # match a substring of it.
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      && github.ref == 'refs/heads/main'
+      && needs.select-mode.outputs.mode == 'publish'
+      && vars.NPM_PUBLISH_ENABLED == 'true'
+      && startsWith(vars.NPM_PUBLISHERS, '[')
+      && contains(fromJSON(vars.NPM_PUBLISHERS || '[]'), github.triggering_actor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Everything that runs the repository's code (install, build, tests) is here, without
+    # id-token and without write access: `publish` only uploads what this job packed.
+    permissions:
+      contents: read # to check out the repository
+    outputs:
+      pack-dir-artifact-id: ${{ steps.pack.outputs.pack-dir-artifact-id }}
+      tarball-sha256: ${{ steps.tarball.outputs.sha256 }}
+    steps:
+      # GATE 3 again, in the shell, before anything else: NPM_PUBLISHERS is an array of strings
+      # and one of them is the actor (exact match, case aside). Both values go through the
+      # environment, never into the script text.
+      - name: Check who is publishing
+        env:
+          PUBLISHERS: ${{ vars.NPM_PUBLISHERS }}
+          ACTOR: ${{ github.triggering_actor }}
+        run: |
+          if ! jq -e --arg actor "$ACTOR" 'type == "array" and all(.[]; type == "string") and any(.[]; ascii_downcase == ($actor | ascii_downcase))' <<<"$PUBLISHERS" >/dev/null 2>&1; then
+            echo "::error title=Not a publisher::The repository variable NPM_PUBLISHERS must be a JSON array of GitHub logins that includes the person who started this run."
+            exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          # No dependency cache in a release job (cache poisoning); setup-node v5+ may turn it on by
+          # itself from package.json, so it is off by name.
+          package-manager-cache: false
+
+      # GATE 2. The input goes through the environment, never into the script text.
+      - name: Check the version to publish
+        env:
+          PUBLISH_VERSION: ${{ inputs.publish-version }}
+        run: |
+          version="$(node -p "require('./packages/client/package.json').version")"
+          if [ "$PUBLISH_VERSION" != "$version" ]; then
+            echo "::error title=Wrong version::publish-version is '$PUBLISH_VERSION' but packages/client/package.json is at '$version'. Run the workflow again with the version that the merged Version Packages pull request set."
+            exit 1
+          fi
+
+      - run: pnpm install --frozen-lockfile
+
+      # GATE 5, checked here as well so that the run fails before the privileged job starts.
+      - name: Require a license
+        run: |
+          license="$(node -p "require('./packages/client/package.json').license ?? ''")"
+          if [ -z "$license" ]; then
+            echo "::error title=No license::packages/client/package.json has no \"license\" field, so nothing is published. Choosing a license is the owner's decision: add the field and a LICENSE file (in packages/client or the repository root), then run this again."
+            exit 1
+          fi
+
+      # Changesets plans a publish for any version that npm does not have yet, and 0.0.0 is the
+      # version before the first release. npm never lets a version be published twice.
+      - name: Refuse the placeholder version
+        run: |
+          version="$(node -p "require('./packages/client/package.json').version")"
+          if [ "$version" = "0.0.0" ]; then
+            echo "::error title=Placeholder version::packages/client is still at 0.0.0: run pnpm release:version and merge its pull request first, then run this again."
+            exit 1
+          fi
+
+      # The release checks: the same as ci.yml runs, in the order the docs and examples need.
+      - run: pnpm -C packages/client build
+      - run: pnpm -C packages/client check:package
+      - run: pnpm -C packages/client test
+      - run: pnpm run docs:check
+
+      - name: Pack
+        id: pack
+        uses: changesets/action/pack@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        with:
+          publish-plan-artifact-id: ${{ needs.select-mode.outputs.publish-plan-artifact-id }}
+
+      # The tarball that ships is the one `pnpm pack` made above (not what `npm pack --dry-run`
+      # would list: `pnpm pack` also copies a LICENSE from the repository root). It holds only
+      # dist/, README.md and package.json, plus a LICENSE file once there is one: no source, tests
+      # or local files. Then the public-content check reads every file in it and every file name:
+      # nothing internal may reach npm. A finding fails this job, so `publish` (which needs it)
+      # never starts and npm gets nothing. (The Pack step above has already stored the tarball as
+      # a workflow artifact, which is how `publish` gets it, so the check cannot come before
+      # that; ci.yml has checked the same tree and tarball on every pull request.) The sha256
+      # goes to the job output, and `publish` compares it before it uploads anything.
+      - name: Check the tarball
+        id: tarball
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          tarballs=("$RUNNER_TEMP"/changeset-pack-*/packages/*.tgz)
+          if [ "${#tarballs[@]}" -ne 1 ]; then
+            echo "::error title=Tarball::Expected exactly one packed tarball, found ${#tarballs[@]}."
+            exit 1
+          fi
+          tarball="${tarballs[0]}"
+          listing="$(tar -tzf "$tarball")"
+          stray="$(printf '%s\n' "$listing" | grep -v '/$' | grep -Ev '^package/(dist/|package\.json$|README\.md$|LICEN[CS]E(\..+)?$)' || true)"
+          if [ -n "$stray" ]; then
+            echo "::error title=Unexpected files in the tarball::$(printf '%s' "$stray" | tr '\n' ' ')"
+            exit 1
+          fi
+          pnpm -C scripts public-check --tarball "$tarball"
+          sha256="$(sha256sum "$tarball" | cut -d' ' -f1)"
+          echo "sha256=$sha256" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Tarball"
+            echo
+            echo "\`$(basename "$tarball")\`, sha256 \`$sha256\`, $(printf '%s\n' "$listing" | wc -l | tr -d ' ') files:"
+            echo
+            echo '```'
+            printf '%s\n' "$listing"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    name: Publish to npm
+    needs: [select-mode, pack]
+    # GATES 1, 3 and 4 again: this job must not rely on `pack` being skipped.
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      && github.ref == 'refs/heads/main'
+      && needs.select-mode.outputs.mode == 'publish'
+      && vars.NPM_PUBLISH_ENABLED == 'true'
+      && startsWith(vars.NPM_PUBLISHERS, '[')
+      && contains(fromJSON(vars.NPM_PUBLISHERS || '[]'), github.triggering_actor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # The environment needs another reviewer's approval (gate 7 in the header), npm's trusted
+    # publisher names it, and its deployment branches (main only) keep a copy of this file on
+    # another branch out.
+    environment:
+      name: npm-release
+      url: https://www.npmjs.com/package/@xomarket/client
+    # The only job that holds id-token: write. It runs no build and no test, and it cannot write
+    # to the repository: the tag and the release are made by `release-tag`, after the upload.
+    permissions:
+      contents: read # to check out the repository
+      id-token: write # npm trusted publishing (OIDC)
+    outputs:
+      published: ${{ steps.publish.outputs.published }}
+      published-packages: ${{ steps.publish.outputs.published-packages }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      # No `registry-url` here on purpose: it would write an .npmrc that expects a token.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          # No dependency cache in a release job (cache poisoning); setup-node v5+ may turn it on by
+          # itself from package.json, so it is off by name.
+          package-manager-cache: false
+
+      # GATE 5. packages/client/package.json must name a license.
+      - name: Require a license
+        run: |
+          license="$(node -p "require('./packages/client/package.json').license ?? ''")"
+          if [ -z "$license" ]; then
+            echo "::error title=No license::packages/client/package.json has no \"license\" field, so nothing is published. Choosing a license is the owner's decision: add the field and a LICENSE file (in packages/client or the repository root), then run this again."
+            exit 1
+          fi
+
+      # Trusted publishing needs npm 11.5.1 or later (and Node 22.14 or later):
+      # https://docs.npmjs.com/trusted-publishers. Node 22 comes with npm 10, which cannot do it,
+      # and `pnpm publish` hands the upload to the npm on PATH. So this job installs one exact
+      # npm: 11.21.0, the newest 11.x that was more than two weeks old when it was chosen (it
+      # came out on 2026-09-30; npm 12 is a new major that nobody has tried here). Bump it on
+      # purpose, not by accident.
+      - name: Install npm 11.21.0
+        env:
+          NPM_VERSION: 11.21.0
+        run: |
+          npm install --global "npm@$NPM_VERSION"
+          test "$(npm --version)" = "$NPM_VERSION"
+
+      # Only so that the Changesets CLI can run: no dependency may run an install script in a job
+      # that holds an OIDC token.
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # The tarball must be the one `pack` checked. The Publish step below downloads the pack
+      # artifact by its id too (an artifact never changes once it is uploaded); this download
+      # exists to hash it first.
+      - name: Download the packed tarball
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.pack.outputs.pack-dir-artifact-id }}
+          path: ${{ runner.temp }}/verify-pack
+
+      - name: Compare the tarball with the one that was checked
+        env:
+          EXPECTED_SHA256: ${{ needs.pack.outputs.tarball-sha256 }}
+          PACK_DIR: ${{ runner.temp }}/verify-pack
+        run: |
+          set -euo pipefail
+          count="$(find "$PACK_DIR" -type f -name '*.tgz' | wc -l | tr -d ' ')"
+          if [ "$count" -ne 1 ]; then
+            echo "::error title=Tarball::Expected exactly one tarball in the pack artifact, found $count."
+            exit 1
+          fi
+          actual="$(sha256sum "$(find "$PACK_DIR" -type f -name '*.tgz')" | cut -d' ' -f1)"
+          if [ -z "$EXPECTED_SHA256" ] || [ "$actual" != "$EXPECTED_SHA256" ]; then
+            echo "::error title=Tarball changed::The tarball is sha256 $actual, but the pack job checked $EXPECTED_SHA256. Nothing was published."
+            exit 1
+          fi
+          echo "Tarball sha256 $actual is the one the pack job checked."
+
+      # Uploads the tarball that `pack` made with `npm publish --access public` (through
+      # `pnpm publish`, which runs npm; the access comes from publishConfig and the Changesets
+      # config). There is no --provenance: trusted publishing from a public repository adds the
+      # provenance by itself. No NPM_TOKEN and no NODE_AUTH_TOKEN: the OIDC token does it. The
+      # action neither tags nor makes a release here (this job cannot write): `release-tag` does.
+      - name: Publish
+        id: publish
+        uses: changesets/action/publish@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        with:
+          pack-dir-artifact-id: ${{ needs.pack.outputs.pack-dir-artifact-id }}
+          push-git-tags: false
+          create-github-releases: false
+
+  release-tag:
+    name: Tag and release
+    needs: publish
+    # Only after npm took the package. `!cancelled()` so that a publish step that failed after
+    # the upload (the output is set first) still gets its tag. If this job fails, re-run it on
+    # its own ("Re-run failed jobs"): it does not publish again and both of its steps skip what
+    # already exists.
+    if: ${{ !cancelled() && needs.publish.outputs.published == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Can write to the repository, cannot mint an OIDC token.
+    permissions:
+      contents: write # to create the tag and the GitHub release
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      PACKAGE: '@xomarket/client'
+      PUBLISHED: ${{ needs.publish.outputs.published-packages }}
+    steps:
+      # For packages/client/CHANGELOG.md, at the commit that was packed and published.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Create the tag
+        run: |
+          set -euo pipefail
+          version="$(jq -er --arg name "$PACKAGE" '.[] | select(.name == $name) | .version' <<<"$PUBLISHED")"
+          tag="$PACKAGE@$version"
+          if existing="$(gh api "repos/$GH_REPO/git/ref/tags/$tag" --jq .object.sha 2>/dev/null)"; then
+            echo "Tag $tag already exists, at $existing (this commit: $GITHUB_SHA). Leaving it."
+          else
+            gh api --method POST "repos/$GH_REPO/git/refs" -f "ref=refs/tags/$tag" -f "sha=$GITHUB_SHA" --silent
+            echo "Created tag $tag at $GITHUB_SHA."
+          fi
+
+      - name: Create the GitHub release
+        run: |
+          set -euo pipefail
+          version="$(jq -er --arg name "$PACKAGE" '.[] | select(.name == $name) | .version' <<<"$PUBLISHED")"
+          tag="$PACKAGE@$version"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists. Leaving it."
+            exit 0
+          fi
+          # The entry of this version in the changelog: from its "## <version>" heading to the next.
+          notes="$RUNNER_TEMP/release-notes.md"
+          awk -v heading="## $version" '$0 == heading { found = 1; next } found && /^## / { exit } found { print }' packages/client/CHANGELOG.md > "$notes"
+          if ! grep -q '[^[:space:]]' "$notes"; then
+            echo "::warning title=No changelog entry::packages/client/CHANGELOG.md has no entry for $version; the release will point to the file."
+            printf 'See packages/client/CHANGELOG.md for what changed in %s.\n' "$version" > "$notes"
+          fi
+          gh release create "$tag" --target "$GITHUB_SHA" --title "$PACKAGE $version" --notes-file "$notes"

@@ -1,0 +1,8 @@
+/.github/                      @WalidOfNow @xo-chef-plankton
+/.github/dependabot.yml        @WalidOfNow @xo-chef-plankton
+/.github/workflows/            @WalidOfNow @xo-chef-plankton
+/.changeset/config.json        @WalidOfNow @xo-chef-plankton
+/scripts/release-version.ts    @WalidOfNow @xo-chef-plankton
+/scripts/public-rules.ts       @WalidOfNow @xo-chef-plankton
+/scripts/public-check.ts       @WalidOfNow @xo-chef-plankton
+/scripts/docs-public-check.ts  @WalidOfNow @xo-chef-plankton
