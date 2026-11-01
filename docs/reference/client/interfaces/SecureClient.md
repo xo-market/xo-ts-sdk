@@ -369,15 +369,20 @@ createMarketOrder(request): Promise<SignedOrder>;
 
 Builds and signs a market order without sending it. A buy spends an `amount` of dollars
 and a sell gives a number of `shares`, at the best prices on the book: the order is a limit
-order at the worst price, 0.999 to buy and 0.001 to sell. It is fill-and-kill (the part
-that does not fill at once is dropped) unless `orderType` is `OrderType.FOK` (all of it
-fills at once, or none). Send it with [postOrder](#postorder).
+order at the worst price you accept. That is `maxPrice` for a buy and `minPrice` for a
+sell; without them it is 0.999 to buy and 0.001 to sell, so the order takes whatever the
+book offers. It is fill-and-kill (the part that does not fill at once is dropped) unless
+`orderType` is `OrderType.FOK` (all of it fills at once, or none). Send it with
+[postOrder](#postorder).
+
+A buy must be worth at least one share at its worst price: 0.999 dollars without
+`maxPrice`.
 
 #### Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
-| `request` | [`CreateMarketOrderRequest`](../type-aliases/CreateMarketOrderRequest.md) | The outcome token (`assetId`), the `side`, and the `amount` of a buy or the `shares` of a sell. See [CreateMarketOrderRequest](../type-aliases/CreateMarketOrderRequest.md). |
+| `request` | [`CreateMarketOrderRequest`](../type-aliases/CreateMarketOrderRequest.md) | The outcome token (`assetId`), the `side`, the `amount` of a buy or the `shares` of a sell, and `maxPrice` or `minPrice` when wanted. See [CreateMarketOrderRequest](../type-aliases/CreateMarketOrderRequest.md). |
 
 #### Returns
 
@@ -386,9 +391,11 @@ fills at once, or none). Send it with [postOrder](#postorder).
 #### Throws
 
 `invalid_input` for a request that is not valid (`shares`
-  on a buy, `amount` on a sell, an amount below one share's worth), `client_closed` after
+  on a buy, `amount` on a sell, `minPrice` on a buy, `maxPrice` on a sell, a worst price off
+  the market's tick size, an amount below one share's worth), `client_closed` after
   [close](#close) or [endAuthentication](#endauthentication), a `SigningError` when the wallet does not
-  sign, and `nonce_unavailable` when the exchange nonce cannot be read.
+  sign, and the errors of reading the tick size (only with a worst price) or the exchange
+  nonce (`nonce_unavailable`).
 
 #### Example
 
@@ -397,6 +404,7 @@ const order = await client.createMarketOrder({
   assetId,
   side: OrderSide.BUY,
   amount: 10,
+  maxPrice: '0.6',
 });
 console.log(order.orderType);
 ```
@@ -3130,7 +3138,7 @@ with [listAccountTrades](#listaccounttrades), or look the order up with [reconci
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
-| `request` | [`CreateMarketOrderRequest`](../type-aliases/CreateMarketOrderRequest.md) | The outcome token (`assetId`), the `side`, and the `amount` of a buy or the `shares` of a sell. See [CreateMarketOrderRequest](../type-aliases/CreateMarketOrderRequest.md). |
+| `request` | [`CreateMarketOrderRequest`](../type-aliases/CreateMarketOrderRequest.md) | The outcome token (`assetId`), the `side`, the `amount` of a buy or the `shares` of a sell, and `maxPrice` or `minPrice` when wanted. See [CreateMarketOrderRequest](../type-aliases/CreateMarketOrderRequest.md). |
 
 #### Returns
 
@@ -3149,6 +3157,7 @@ const response = await client.placeMarketOrder({
   assetId,
   side: OrderSide.SELL,
   shares: 5,
+  minPrice: '0.4',
 });
 console.log(response.ok ? response.status : response.code);
 ```

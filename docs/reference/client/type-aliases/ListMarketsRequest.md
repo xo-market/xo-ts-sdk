@@ -89,6 +89,7 @@ optional status?: "active" | "closed" | "resolved";
 ```
 
 Only markets in this stage of their life: `active` (open for trading and not past their
-end time), `closed` (trading has ended and the outcome is not decided yet) or `resolved`
+end time), `closed` (past their end time, with the outcome not decided yet) or `resolved`
 (the outcome is decided). Defaults to `active`: a list without a `status` holds open
-markets only.
+markets only. A `closed` market's own status still reads `ACTIVE` until its outcome is
+set, so its `state.closed` is `false`.

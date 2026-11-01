@@ -41,10 +41,12 @@ export const MINIMUM_ORDER_SIZE: DecimalString = fromMicro(MIN_SIZE_MICRO);
  * Where a market is in its life, in XO's words. A status added later reads as its own string.
  *
  * - `PENDING`: created, not open yet.
- * - `ACTIVE`: open for trading.
+ * - `ACTIVE`: open for trading. A market past its end time reads `ACTIVE` until its outcome
+ *   is set.
  * - `PAUSED`: trading is paused.
- * - `CLOSED`: trading ended (see {@link MarketState.closed}).
  * - `RESOLVED`: the outcome is decided.
+ * - `CLOSED`: the outcome is decided and the market is final; it was `RESOLVED` first (see
+ *   {@link MarketState.closed}).
  * - `CANCELLED`, `VOIDED`, `VOIDED_CLOSED`: the market was called off.
  * - `DISPUTED`, `DEFAULTED`, `UPDATE_REQUIRED`: a resolution problem or an edit under review.
  */

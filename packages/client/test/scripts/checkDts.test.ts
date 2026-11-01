@@ -4,7 +4,11 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, test } from 'vitest';
 import {
   ALLOWED_VALUES,
+  comparePinned,
+  declaredExports,
   packageEntries,
+  pinnedEntryOf,
+  readPinnedLists,
   scanDeclarations,
 } from '../../scripts/check-dts.mjs';
 
@@ -131,5 +135,112 @@ export { Side };
       'ACTIVITY_TYPES',
       'ORDER_REJECTION_CODES',
     ]);
+  });
+});
+
+describe('check-dts: the declared names against the pinned lists', () => {
+  test('splits what an entry declares into runtime values and type-only names', async () => {
+    const dir = await dist({
+      'index.d.ts': `declare function make(): void;
+declare class Failure extends Error {}
+declare enum Side { BUY = 'BUY' }
+declare const LIMIT: 10;
+interface Shape { a: string }
+type Alias = string;
+declare class OnlyAType {}
+export { make, Failure, Side, LIMIT };
+export type { Shape, Alias, OnlyAType };
+`,
+    });
+    expect(declaredExports(join(dir, 'index.d.ts'))).toEqual({
+      values: ['Failure', 'LIMIT', 'Side', 'make'],
+      types: ['Alias', 'OnlyAType', 'Shape'],
+    });
+  });
+
+  test('reads the pinned lists of every entry from the lists file', async () => {
+    const dir = await dist({
+      'lists.ts': `/** Values. */
+export const MAIN_VALUES = ['a', 'b'] as const;
+export const MAIN_TYPES = ['T'] as const;
+export const NODE_VALUES = [] as const;
+export const NODE_TYPES = ['N'] as const;
+export const SIGNING_VALUES = ['s'] as const;
+export const SIGNING_TYPES = [] as const;
+export const VIEM_VALUES = ['v'] as const;
+export const VIEM_TYPES = ['V'] as const;
+`,
+    });
+    expect(readPinnedLists(join(dir, 'lists.ts'))).toEqual({
+      main: { values: ['a', 'b'], types: ['T'] },
+      node: { values: [], types: ['N'] },
+      signing: { values: ['s'], types: [] },
+      viem: { values: ['v'], types: ['V'] },
+    });
+  });
+
+  test('maps each published declaration file to the pinned lists of its entry', () => {
+    expect(packageEntries('/d').map((p) => pinnedEntryOf(p.slice(3)))).toEqual([
+      'main',
+      'main',
+      'node',
+      'node',
+      'signing',
+      'signing',
+      'viem',
+      'viem',
+    ]);
+  });
+
+  test('reports a pinned name the declarations lack, an extra name and a value typed as a type', () => {
+    const problems = comparePinned(
+      'index.d.ts',
+      { values: ['create', 'Side'], types: ['Shape', 'Extra', 'isClient'] },
+      { values: ['Side', 'create', 'isClient'], types: ['Shape'] },
+    );
+    expect(problems).toEqual([
+      'index.d.ts: isClient is a pinned value but the declarations have it as a type only',
+      'index.d.ts: Extra is declared but not in the pinned lists',
+    ]);
+  });
+
+  test('reports a pinned name that is missing from the declarations altogether', () => {
+    expect(
+      comparePinned(
+        'index.d.cts',
+        { values: ['create'], types: [] },
+        { values: ['create', 'isClient'], types: ['Shape'] },
+      ),
+    ).toEqual([
+      'index.d.cts: Shape is pinned but not declared',
+      'index.d.cts: isClient is pinned but not declared',
+    ]);
+  });
+
+  test('an entry that declares exactly its pinned names has no problem', () => {
+    expect(
+      comparePinned(
+        'viem.d.ts',
+        { values: ['privateKey'], types: ['Signer'] },
+        { values: ['privateKey'], types: ['Signer'] },
+      ),
+    ).toEqual([]);
+  });
+
+  test('reports a pinned type that the declarations make a runtime value', () => {
+    expect(
+      comparePinned(
+        'node.d.ts',
+        { values: ['fileStore', 'Store'], types: [] },
+        { values: ['fileStore'], types: ['Store'] },
+      ),
+    ).toEqual([
+      'node.d.ts: Store is a pinned type but the declarations have it as a runtime value',
+    ]);
+  });
+
+  test('maps a declaration path with Windows separators too', () => {
+    expect(pinnedEntryOf('signing\\index.d.ts')).toBe('signing');
+    expect(pinnedEntryOf('signing\\index.d.cts')).toBe('signing');
   });
 });

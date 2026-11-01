@@ -14,7 +14,7 @@ const {
 const assetId =
   market?.outcomes.yes.tokenId ?? never('No YES token found for market');
 
-const [orderBook, buyPrice, midpoint, spread, lastTrade] = await Promise.all([
+const [orderBook, bestBid, midpoint, spread, lastTrade] = await Promise.all([
   client.fetchOrderBook({ assetId }),
   client.fetchPrice({ assetId, side: OrderSide.BUY }),
   client.fetchMidpoint({ assetId }),
@@ -27,7 +27,7 @@ console.table({
   assetId,
   bids: orderBook.bids.length,
   asks: orderBook.asks.length,
-  buyPrice,
+  bestBid,
   midpoint,
   spread,
   lastTradePrice: lastTrade?.price ?? 'N/A',

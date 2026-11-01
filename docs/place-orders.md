@@ -60,7 +60,8 @@ const placed = await client.placeLimitOrder({
 ## Place a market order
 
 A market order takes the best prices on the book. A buy spends an `amount` of USDC, and a sell
-gives a number of `shares`.
+gives a number of `shares`. Set `maxPrice` on a buy or `minPrice` on a sell, and the order only
+fills at that price or better.
 
 <!-- snippet: docs/snippets/place-orders.ts#market-order -->
 ```ts
@@ -68,15 +69,21 @@ const bought = await client.placeMarketOrder({
   assetId,
   side: OrderSide.BUY,
   amount: '5', // spends up to 5 USDC
+  maxPrice: '0.6', // never pays more than 0.6 a share
 });
 
 const sold = await client.placeMarketOrder({
   assetId,
   side: OrderSide.SELL,
   shares: '5',
+  minPrice: '0.4', // never takes less than 0.4 a share
   orderType: OrderType.FOK, // all 5 shares, or none
 });
 ```
+
+Without a worst price, a buy takes any price up to 0.999 and a sell any price down to 0.001, so
+a thin book can fill it far from the last trade. A buy must be worth at least one share at its
+worst price: 0.999 USDC without `maxPrice`.
 
 ## Create, then post
 

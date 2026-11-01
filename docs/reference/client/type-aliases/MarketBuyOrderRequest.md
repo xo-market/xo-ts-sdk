@@ -28,6 +28,18 @@ The outcome token to buy: `outcomes.yes.tokenId` or `outcomes.no.tokenId` of a m
 
 ***
 
+### maxPrice?
+
+```ts
+optional maxPrice?: number | string;
+```
+
+The highest price per share to pay: the order only fills at this price or better. From
+0.001 to 0.999, a multiple of the market's tick size. Without it the order takes any price
+up to 0.999.
+
+***
+
 ### orderType?
 
 ```ts

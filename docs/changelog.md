@@ -10,7 +10,8 @@ First public release.
 - Two clients: `createPublicClient()` reads public data, and `createSecureClient({ signer })`
   signs in with a wallet or one of its smart wallets.
 - Markets, events, prices, order books and trades.
-- Limit and market orders, singly or in batches, and cancels.
+- Limit and market orders, singly or in batches, and cancels. A market order can cap its price
+  with `maxPrice` (buy) or `minPrice` (sell).
 - An opt-in heartbeat that cancels every open order when the beats stop.
 - Positions, profit and loss, activity, balances and API keys.
 - Approvals, transfers, merge and redeem on chain. XO pays the gas by default.

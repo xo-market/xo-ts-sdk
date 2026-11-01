@@ -28,6 +28,10 @@
   never for a pass that only reconciles, so `cancelAll()` starts well within the 20 s that
   stopping may take; if it takes longer the bot says so, exits with code 1, and you should
   check your open orders. A second Ctrl-C kills it at once.
+- **It never calls `cancelAll()` before its first quote.** When it fails to start (a mistyped
+  `XO_MARKET`, a market without an order book) or you stop it during startup, it has placed
+  nothing, so it only closes the client: your orders in other markets stay. The start-up
+  cancel of its own market (below) still runs once the market is found.
 - **It never resends an order.** See below.
 - **The heartbeat is opt-in** (`XO_HEARTBEAT=1`). Read the warning below first.
 

@@ -132,8 +132,9 @@ const keyOf = (quotes: Iterable<Quote>): string =>
 
 /**
  * Runs the bot until Ctrl-C (or `runSeconds`, or `signal`), then cancels everything and
- * closes. A failure to start (sign-in, setup, the market) is thrown, after the same cancel
- * and close.
+ * closes. A failure to start (sign-in, setup, the market) is thrown after the client is
+ * closed; before the first quote nothing is cancelled but the start-up cancel of the bot's
+ * own market, which runs once the market is found.
  */
 export async function runBot(config: BotConfig): Promise<void> {
   const log =
@@ -182,7 +183,8 @@ export async function runBot(config: BotConfig): Promise<void> {
   });
 
   // ---------------------------------------------------------------------------
-  // Stopping: cancel everything (every market), stop the heartbeat, close.
+  // Stopping: once quoting began, cancel everything (every market); then stop the
+  // heartbeat and close.
   // ---------------------------------------------------------------------------
   const stop = async (reason: string, exitCode = 0): Promise<void> => {
     if (stopping) {
@@ -191,9 +193,20 @@ export async function runBot(config: BotConfig): Promise<void> {
     stopping = true;
     clearTimeout(debounce);
     clearTimeout(retry);
-    log(`stopping (${reason}): cancelling everything`);
+    // Before the first quote the bot has placed nothing, and the account's other orders are
+    // not its own: a failed start or an early Ctrl-C skips cancelAll().
+    const quoted = market !== undefined;
+    log(
+      quoted
+        ? `stopping (${reason}): cancelling everything`
+        : `stopping (${reason}) before quoting: cancelling nothing`,
+    );
     let code = exitCode;
     const work = async () => {
+      if (!quoted) {
+        await client.close();
+        return;
+      }
       // Never interrupt a placement half-way: let one in flight finish first, for a while.
       // A pass that only reconciles (the latch is blocked) sends nothing, so it is not waited
       // for, and cancelAll starts well within the cap either way.

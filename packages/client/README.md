@@ -27,6 +27,10 @@ for (const market of page.items) {
 }
 ```
 
+It uses top-level `await`, so run it as an ES module: add `"type": "module"` to `package.json` and
+run the file with `npx tsx`. The [Quickstart](https://docs.xo.market/typescript-sdk/overview#quickstart)
+has a `tsconfig.json` to start from.
+
 To trade, follow [Place your first order](https://docs.xo.market/typescript-sdk/quickstart).
 
 ## Documentation

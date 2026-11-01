@@ -156,13 +156,15 @@ describe('listMarkets', () => {
     expect(r.backend.requests).toHaveLength(3);
   });
 
-  test('an explicit status replaces the default: closed and resolved are asked for alone', async () => {
+  test('an explicit status replaces the default with the stages it covers', async () => {
     const r = actionRig(server);
     await listMarkets(r.ctx, { status: 'closed' }).firstPage();
     await listMarkets(r.ctx, { status: 'resolved' }).firstPage();
     await listMarkets(r.ctx, { status: 'active' }).firstPage();
+    // `closed`: past the end time, outcome not decided yet, which XO calls EXPIRED.
+    // `resolved`: the outcome is decided, first RESOLVED and then, for good, CLOSED.
     expect(r.backend.requests.map((request) => request.query.statuses)).toEqual(
-      ['CLOSED', 'RESOLVED', 'ACTIVE'],
+      ['EXPIRED', 'RESOLVED,CLOSED', 'ACTIVE'],
     );
   });
 
@@ -176,7 +178,7 @@ describe('listMarkets', () => {
     }).firstPage();
     expect(r.backend.requests[0]?.query).toMatchObject({
       marketType: '2',
-      statuses: 'RESOLVED',
+      statuses: 'RESOLVED,CLOSED',
       categories: 'Sports',
       take: '7',
       expiresAfter: '2026-11-01T00:00:00.000Z',
@@ -184,7 +186,7 @@ describe('listMarkets', () => {
     await listMarkets(r.ctx, { status: 'active' }).firstPage();
     expect(r.backend.requests[1]?.query.statuses).toBe('ACTIVE');
     await listMarkets(r.ctx, { status: 'closed' }).firstPage();
-    expect(r.backend.requests[2]?.query.statuses).toBe('CLOSED');
+    expect(r.backend.requests[2]?.query.statuses).toBe('EXPIRED');
   });
 
   test('iterating yields the pages in order, one request each', async () => {
@@ -482,9 +484,13 @@ describe('listMarkets', () => {
         eventId: EVENT_ID,
         status: 'resolved',
       }).firstPage();
+      await listMarkets(r.ctx, {
+        seriesId: SERIES_ID,
+        status: 'closed',
+      }).firstPage();
       expect(
         r.backend.requests.map((request) => request.query.statuses),
-      ).toEqual(['ACTIVE', 'ACTIVE', 'RESOLVED']);
+      ).toEqual(['ACTIVE', 'ACTIVE', 'RESOLVED,CLOSED', 'EXPIRED']);
     });
 
     test('status, sort, order and page size apply to the scoped list too', async () => {
@@ -1114,7 +1120,7 @@ describe('listBrowseItems', () => {
     await listBrowseItems(r.ctx, { status: 'resolved' }).firstPage();
     await listBrowseItems(r.ctx, { status: 'closed' }).firstPage();
     expect(r.backend.requests.map((request) => request.query.statuses)).toEqual(
-      ['ACTIVE', 'RESOLVED', 'CLOSED'],
+      ['ACTIVE', 'RESOLVED,CLOSED', 'EXPIRED'],
     );
   });
 
