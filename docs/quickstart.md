@@ -1,170 +1,76 @@
-# Quickstart
+# Place your first order
 
-> [!WARNING]
-> XO runs on mainnet, so the money is real. Use a new wallet that holds only what you can afford
-> to lose.
+This guide buys 1 USDC of YES in one market and shows your position. XO runs on mainnet, so the
+USDC is real. Use a wallet that holds only what you can afford to lose.
 
-You need Node 22 or later, the private key of that wallet, and about 5 USDC on Base. Each step
-runs one script from the SDK's [examples](../examples/scripts/README.md).
+You need the wallet's private key in `XO_PK` and at least 1 USDC in your XO account. To add USDC,
+see [Deposit](deposit.md).
 
-## 1. Set up a project
+## 1. Sign in
 
-<!-- snippet: none -->
-```sh
-mkdir xo-app && cd xo-app
-npm init -y && npm pkg set type=module
-npm install @xomarket/client viem
-npm install -D tsx typescript @types/node
-```
+Create a secure client with your key. It signs in before it returns.
 
-Copy the scripts below and their `lib` folder from the examples' [`src`](../examples/scripts/src/)
-folder. Then copy the repository's [`.env.example`](../.env.example) and add your key:
-
-<!-- snippet: none -->
-```sh
-cp .env.example .env   # then set XO_PK=0x... in .env
-```
-
-## 2. List markets
-
-Run `npx tsx list-markets.ts`. Reading markets needs no key.
-
-<!-- snippet: docs/snippets/markets.ts#client -->
+<!-- snippet: docs/snippets/quickstart.ts#sign-in -->
 ```ts
-const client = createPublicClient();
-```
+import { createSecureClient, OrderSide } from '@xomarket/client';
+import { privateKey } from '@xomarket/client/viem';
 
-<!-- snippet: docs/snippets/quickstart.ts#list-markets -->
-```ts
-const page = await client
-  .listMarkets({
-    pageSize: 5,
-  })
-  .firstPage();
-
-for (const market of page.items) {
-  console.log(`${market.id}: ${market.question}`);
-}
-```
-
-It prints five open markets:
-
-<!-- snippet: none -->
-```console Example
-54873: Draw: Sunderland vs Dinamo Zagreb
-54875: Torreense to win vs Ararat-Armenia
-54876: Draw: Torreense vs Ararat-Armenia
-54872: Sunderland to win vs Dinamo Zagreb
-54877: Ararat-Armenia to win vs Torreense
-```
-
-## 3. Check your account
-
-Run `npx tsx dashboard.ts`. It reads your account and changes nothing.
-
-<!-- snippet: docs/snippets/portfolio.ts#client -->
-```ts
 const client = await createSecureClient({
-  signer: privateKey(requireEnv('XO_PK')),
+  signer: privateKey(process.env.XO_PK ?? ''),
 });
 ```
 
-<!-- snippet: docs/snippets/portfolio.ts#balances -->
+## 2. Set up trading
+
+Let the exchange use your USDC. This runs once, XO pays the gas, and later calls send nothing.
+
+<!-- snippet: docs/snippets/quickstart.ts#setup -->
 ```ts
-const balances = await client.fetchBalances();
-console.log(`${client.wallet}: ${balances.collateral} USDC to trade with`);
-console.table(balances.positions);
+await client.setupTradingApprovals();
 ```
 
-`createSecureClient` signs in for you, and creates your XO account the first time.
-`client.wallet` is the address you trade from.
+## 3. Choose an outcome
 
-## 4. Deposit USDC
+Take the slug from the market's link on XO, `https://xo.market/markets/<slug>`. You trade an
+outcome by its token id.
 
-Run `npx tsx deposit.ts`. It prints an address and an amount, then waits. Send that amount of
-USDC on Base to that address, once. The script ends when the payment is final. Only `COMPLETE`
-means your USDC arrived.
-
-If the script stops after you sent the funds, don't send again. The payment carries on, and
-[Deposits and withdrawals](deposits-and-withdrawals.md) shows how to follow it by its
-`paymentId`. If you sent nothing, send nothing: the payment expires, and a new run gets a new
-quote.
-
-## 5. Set up trading
-
-Run `npx tsx account-setup.ts`. In one transaction, it lets the exchange move your USDC and
-shares. XO pays the gas.
-
-<!-- snippet: docs/snippets/onchain.ts#setup -->
+<!-- snippet: docs/snippets/quickstart.ts#choose -->
 ```ts
-const state = await client.fetchTradingApprovalsState();
-console.log(
-  state.ready ? 'Ready to trade' : 'Approvals missing: setting them up',
-);
-
-const transaction = await client.setupTradingApprovals();
-console.log(
-  transaction === null
-    ? 'Already set up: nothing sent'
-    : `Set up in transaction ${transaction.transactionHash}`,
-);
+const market = await client.fetchMarket({ slug: 'your-market-slug' });
+const assetId = market.outcomes.yes.tokenId;
+if (assetId === null) {
+  throw new Error('This market has no YES outcome');
+}
 ```
 
-When the account is set up already, it sends nothing, so you can run it on every start.
+## 4. Place a market order
 
-## 6. Place and cancel an order
-
-Run `npx tsx place-and-cancel.ts`. It picks a busy market that takes orders, bids for 1 YES
-share at the lowest price so the order rests on the book, then cancels it.
-
-<!-- snippet: docs/snippets/orders.ts#place -->
+<!-- snippet: docs/snippets/quickstart.ts#order -->
 ```ts
-const placed = await client.placeLimitOrder({
+const order = await client.placeMarketOrder({
   assetId,
   side: OrderSide.BUY,
-  price: tickSize,
-  size: '1',
-  postOnly: true,
+  amount: '1', // spends up to 1 USDC
 });
-console.log(
-  placed.ok
-    ? `BUY 1 YES @ ${tickSize} is ${placed.status}: ${placed.orderId}`
-    : `Refused (${placed.code}): ${placed.message}`,
-);
+
+console.log(order.ok ? order.status : `Refused: ${order.code}`);
 ```
 
-<!-- snippet: docs/snippets/orders.ts#cancel -->
+`delayed` means the order waits out a short delay and can still fill. If the call throws, check
+with `reconcileOrder` before you place it again.
+
+## 5. Check your position
+
+<!-- snippet: docs/snippets/quickstart.ts#position -->
 ```ts
-if (placed.ok) {
-  const { canceled } = await client.cancelOrder({ orderId: placed.orderId });
-  console.log(`Canceled ${canceled.length} order(s)`);
+const { items } = await client.listPositions().firstPage();
+
+for (const position of items) {
+  console.log(`${position.title}: ${position.currentSize} shares`);
 }
 ```
 
-It prints something like this:
+A new position can take a few seconds to show while the trade settles.
 
-<!-- snippet: none -->
-```console Example
-BUY 1 YES @ 0.001 is live: 0x7b1f…e09a
-Canceled 1 order(s)
-```
-
-With `postOnly: true`, XO refuses an order that would trade right away. A refused order has
-`placed.ok` set to `false`, and nothing was placed. If the call throws with `mayHaveLanded: true`,
-the order may be on the book: look it up with `reconcileOrder` before you place it again.
-
-## Common issues
-
-| You see | What to do |
-| --- | --- |
-| `Set XO_PK (see .env.example)` | Put your key in `.env` as `XO_PK=0x...`. |
-| `0 USDC to trade with` after a deposit | Wait a few seconds after `COMPLETE`, then run `dashboard.ts` again. |
-| `Refused (market_not_active)` | The market stopped taking orders after the script picked it. Run it again. |
-| `Refused (...)` | XO says why. Check that step 3 shows USDC to trade with. |
-| `api_key_limit_reached` | Your account has 10 active API keys. See the [Production checklist](production.md). |
-
-## Next steps
-
-- [Place other kinds of orders](orders.md)
-- [Show markets and prices in your app](markets.md)
-- [Follow a deposit, or withdraw](deposits-and-withdrawals.md)
+That's it: you placed your first order. Next, learn the other order types in
+[Place orders](place-orders.md), or stream your fills with [Real-time data](realtime.md).

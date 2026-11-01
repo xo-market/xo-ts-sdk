@@ -181,7 +181,7 @@ To check a payment, read `fetchBridgePayment({ paymentId: error.paymentId })`.
 | `bridge_unavailable` | `RequestRejectedError` | Quote again. After a confirm, check the payment. |
 | `bridge_rejected` | `RequestRejectedError` | Quote again. After a confirm, check the payment. |
 
-## Live data
+## Real-time data
 
 These come as `'error'` events of a subscription. To read a topic again, use `fetchOrderBooks`
 for `market`, `listOpenOrders` for `user` and `listPositions` for `portfolio`.
@@ -218,6 +218,6 @@ for `market`, `listOpenOrders` for `user` and `listPositions` for `portfolio`.
 
 ## Next steps
 
-- [Place an order](orders.md)
-- [Production checklist](production.md)
+- [Place orders](place-orders.md)
+- [Reconcile an order](manage-orders.md#reconcile-an-order)
 - [Every error class](reference/client/classes/XoError.md)

@@ -11,23 +11,14 @@
         {
           "source": "README.md",
           "slug": "overview",
-          "sidebarTitle": "Overview",
-          "description": "Read XO markets, trade, and move money from your server."
-        },
-        {
-          "source": "install.md",
-          "slug": "install",
-          "description": "Add the SDK to a Node or Bun project."
+          "sidebarTitle": "Introduction",
+          "description": "Read markets, stream live data, trade and move funds from your server."
         },
         {
           "source": "quickstart.md",
           "slug": "quickstart",
-          "description": "Go from a new key to your first order on XO."
-        },
-        {
-          "source": "examples.md",
-          "slug": "examples",
-          "description": "Short scripts you can run, one task each."
+          "description": "Sign in, buy 1 USDC of an outcome and see your position.",
+          "sidebarTitle": "Place your first order"
         }
       ]
     },
@@ -38,17 +29,12 @@
         {
           "source": "markets.md",
           "slug": "markets",
-          "description": "List markets and read prices and order books. No key needed."
+          "description": "Markets, prices, order books, events and rewards. No key needed."
         },
         {
           "source": "realtime.md",
           "slug": "realtime",
-          "description": "Stream order books, your orders and your portfolio."
-        },
-        {
-          "source": "portfolio.md",
-          "slug": "portfolio",
-          "description": "Read an account's positions, PnL and activity."
+          "description": "Stream order books, trades, your orders and your positions."
         }
       ]
     },
@@ -59,38 +45,38 @@
         {
           "source": "authentication.md",
           "slug": "authentication",
-          "description": "How your key signs in, and how to keep credentials across restarts."
+          "description": "Sign in with your key or a smart wallet, and keep credentials across restarts."
         },
         {
-          "source": "orders.md",
-          "slug": "orders",
-          "description": "Place, list and cancel orders."
+          "source": "place-orders.md",
+          "slug": "place-orders",
+          "description": "Limit, market, expiring and batch orders, and what each result means."
         },
         {
-          "source": "smart-wallets.md",
-          "slug": "smart-wallets",
-          "description": "Trade through a smart wallet, such as an XO website account."
+          "source": "manage-orders.md",
+          "slug": "manage-orders",
+          "description": "List, cancel and reconcile orders, and cancel them all if your server stops."
         },
         {
-          "source": "production.md",
-          "slug": "production",
-          "description": "What to set up before your server runs on its own."
+          "source": "positions.md",
+          "slug": "positions",
+          "description": "Positions, balances, profit and activity. Merge, redeem and transfer."
         }
       ]
     },
     {
-      "group": "Funds",
+      "group": "Bridge",
       "icon": "money-bill-transfer",
       "pages": [
         {
-          "source": "deposits-and-withdrawals.md",
-          "slug": "deposits-and-withdrawals",
-          "description": "Move USDC into XO and back out."
+          "source": "deposit.md",
+          "slug": "deposit",
+          "description": "Move USDC into XO from another network."
         },
         {
-          "source": "onchain.md",
-          "slug": "onchain",
-          "description": "Balances, account setup, transfers, merging and redeeming."
+          "source": "withdraw.md",
+          "slug": "withdraw",
+          "description": "Move USDC out of XO to another network."
         }
       ]
     },

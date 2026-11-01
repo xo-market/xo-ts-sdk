@@ -117,3 +117,17 @@ export async function rewardsMarkets(client: PublicClient) {
   }
   // #endregion rewards-markets
 }
+
+export async function readWithOptions(
+  client: PublicClient,
+  assetId: string,
+  signal: AbortSignal,
+) {
+  // #region request-options
+  const book = await client.fetchOrderBook(
+    { assetId },
+    { timeout: 5_000, retries: 0, signal },
+  );
+  // #endregion request-options
+  return book;
+}

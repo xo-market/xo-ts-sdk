@@ -1,64 +1,54 @@
-# Wallets and sign-in
+# Wallets and authentication
 
 ## Sign in
 
 <!-- snippet: docs/snippets/authentication.ts#sign-in -->
 ```ts
-const client = await createSecureClient({ signer: privateKey(key) });
+const client = await createSecureClient({
+  signer: privateKey(process.env.XO_PK ?? ''),
+});
 console.log(`Trading as ${client.wallet}`);
 ```
 
-`createSecureClient` signs in with your wallet key before it returns, so there is no separate
-login call. `privateKey` comes from `@xomarket/client/viem`.
+`createSecureClient` signs in before it returns. `client.wallet` is the address that holds the
+funds and trades: your key's own, unless you trade through a
+[smart wallet](#trade-through-a-smart-wallet). Any signer from
+[Wallet integrations](README.md#wallet-integrations) works. A wallet client, such as a browser or hardware
+wallet, can sign in and trade, but on-chain sends like approvals, transfers and withdrawals fail
+with `sign_hash_unsupported`. Use a private key or a viem account for those.
 
-`client.wallet` is the address that holds the funds and trades. It is your key's own address,
-unless you trade through a [smart wallet](smart-wallets.md).
-
-Never type the key on a command line: your shell saves it in its history. See
-[Keep keys out of logs](production.md#keep-keys-out-of-logs).
-
-## Use another signer
-
-<!-- snippet: docs/snippets/authentication.ts#signer-from-account -->
-```ts
-const client = await createSecureClient({ signer: signerFrom(account) });
-```
-
-`signerFrom` turns a viem account into a signer, such as one that a key management service signs
-for. You can also write your own [`Signer`](reference/client/interfaces/Signer.md).
+Never put a key on the command line, like `XO_PK=0x… node bot.js`: your shell saves it in its
+history. Keep it in a gitignored `.env` file, and never turn on socket.io-client's debug logging:
+it prints the API key.
 
 ## Keep credentials across restarts
 
 <!-- snippet: docs/snippets/authentication.ts#file-store -->
 ```ts
 const client = await createSecureClient({
-  signer: privateKey(key),
-  store: fileStore('./.xo-credentials'),
+  signer: privateKey(process.env.XO_PK ?? ''),
+  store: fileStore('./.xo-credentials'), // from @xomarket/client/node
 });
 ```
 
-Without a store, every start signs in for a new 1-day API key. `fileStore` from
-`@xomarket/client/node` keeps one 90-day key across restarts and replaces it before it expires.
+Without a store, every start signs in for a new 1-day API key. An account holds at most 10
+active keys, then creating a client fails with `api_key_limit_reached`. `fileStore` keeps one
+90-day key across restarts and replaces it before it expires. `rotateCredentials()` swaps the key
+for a new one at any time.
 
-The files are secret. Keep the folder out of git, and give each process its own. To keep
-credentials somewhere else, such as a vault, implement
-[`CredentialStore`](reference/client/interfaces/CredentialStore.md).
+Keep the store's folder private and out of git, one per process. For a vault or other storage,
+implement [`CredentialStore`](reference/client/interfaces/CredentialStore.md).
 
 ## Reuse credentials
 
 <!-- snippet: docs/snippets/authentication.ts#saved-credentials -->
 ```ts
-const saved = await client.exportCredentials();
+const saved = await client.exportCredentials(); // secret: never log it
 
-const again = await createSecureClient({
-  signer: privateKey(key),
-  credentials: saved,
-});
+const again = await createSecureClient({ signer, credentials: saved });
 ```
 
-`exportCredentials()` returns the client's API key and order book key. They are secret, so never
-log them. A client given them as `credentials` uses them instead of signing in for new ones. It
-checks first that they belong to the wallet, and it never rotates them.
+The second client uses them instead of signing in.
 
 ## Close the client
 
@@ -67,46 +57,83 @@ checks first that they belong to the wallet, and it never rotates them.
 await client.close();
 ```
 
-`close()` ends the client in this process. It stops its heartbeat and subscriptions, and revokes
-the 1-day key it signed in for. A key in a store stays for the next start, and the order book key
-is kept.
-
-Without a store, a script needs no `close()`. The client revokes its 1-day key by itself on
-Ctrl-C, SIGTERM and a normal exit.
+`close()` stops the client in this process and revokes its 1-day key. A key in a store stays for
+the next start. Without a store, a script needs no `close()`: its key is revoked on Ctrl-C,
+SIGTERM and a normal exit.
 
 ## Sign out for good
 
 <!-- snippet: docs/snippets/authentication.ts#end-authentication -->
 ```ts
 const publicClient = await client.endAuthentication();
-const { items } = await publicClient.listMarkets().firstPage();
 ```
 
-`endAuthentication()` revokes the API key, deletes it from the store, and deletes the wallet's
-order book key. It returns a public client.
+`endAuthentication()` revokes the API key, deletes it from the store and returns a public
+client. It also deletes the order book key that every process of that wallet shares; `close()`
+does not.
+
+## Trade through a smart wallet
+
+A smart wallet is an account your key owns: the key signs, and the smart wallet holds the USDC
+and trades. For a new account, your key's own address is simpler.
+
+<!-- snippet: docs/snippets/authentication.ts#smart-wallet-address -->
+```ts
+const signer = privateKey(process.env.XO_PK ?? '');
+const wallet = await createPublicClient().fetchSmartWalletAddress({
+  owner: await signer.getAddress(),
+  index: 0,
+});
+console.log(`Smart wallet 0: ${wallet}`);
+```
+
+The address is known before the wallet exists. Smart wallets 0–9 only: never fund a higher one.
+
+<!-- snippet: docs/snippets/authentication.ts#smart-wallet-client -->
+```ts
+const client = await createSecureClient({ signer, wallet });
+```
+
+The first time, this deploys the smart wallet once, gas-free, with its trading approvals. If
+that throws with `mayHaveLanded: true`, find the transaction before you create the client again.
+An address your key does not own is refused with `wallet_not_owned`.
 
 > [!WARNING]
-> Every process that trades with this wallet shares its order book key, and
-> `endAuthentication()` deletes it for all of them. To stop one process, call `close()`.
+> Send USDC to the smart wallet's address, never the key's. The smart wallet can't trade USDC
+> held at your key's address.
 
-## Replace an API key
+## Set up approvals
 
-<!-- snippet: docs/snippets/authentication.ts#rotate-key -->
+<!-- snippet: docs/snippets/authentication.ts#setup -->
 ```ts
-for await (const page of client.listApiKeys()) {
-  for (const key of page.items) {
-    console.log(key.name, key.expiresAt);
-  }
-}
-await client.rotateCredentials();
+const transaction = await client.setupTradingApprovals();
+console.log(transaction?.transactionHash ?? 'Nothing to set up');
 ```
 
-An account holds at most 10 active API keys. `rotateCredentials()` signs in for a new key, then
-revokes the old one. Unused keys expire by themselves. To free a slot sooner, write to
-gm@xo.market.
+An existing smart wallet may lack its approvals. This sends only what is missing.
+
+## Trade your XO website account
+
+Your XO website account is a smart wallet. To trade it from your server:
+
+## 1. Export your login key
+
+Export the private key of the wallet you log in to XO with. If the website offers no export,
+write to gm@xo.market. Never send the key to anyone, XO included.
+
+## 2. Check the address
+
+Check that the key's smart wallet 0, read as above, is your account's address on the website.
+
+## 3. Create the client
+
+Create the client with that key and address, then call `setupTradingApprovals()`.
+
+Your server and the website then share the same USDC, positions and orders: `cancelAll()` and a
+stopped heartbeat cancel the website's orders too.
 
 ## Next steps
 
-- [Place an order](orders.md)
-- [Trade through a smart wallet](smart-wallets.md)
-- [Run in production](production.md)
+- [Place orders](place-orders.md)
+- [Deposit](deposit.md)
+- [Errors](errors.md)

@@ -1,7 +1,6 @@
-// Code that docs/deposits-and-withdrawals.md quotes: type-checked, never run.
+// Code that docs/deposit.md quotes: type-checked, never run.
 
 import type {
-  BridgeAsset,
   DepositQuote,
   SecureClient,
   VerificationRequest,
@@ -46,34 +45,10 @@ export async function depositSteps(client: SecureClient) {
 
 export async function waitForDeposit(client: SecureClient, paymentId: string) {
   // #region deposit-wait
-  const done = await client.waitForBridgePayment({ paymentId });
+  const done = await client.waitForBridgePayment({ paymentId }); // up to an hour
   console.log(`${paymentId}: ${done.status}`);
   // #endregion deposit-wait
   return done;
-}
-
-export async function withdrawSteps(
-  client: SecureClient,
-  usdc: BridgeAsset,
-  recipient: string,
-) {
-  // #region withdraw-quote
-  const [quote] = await client.quoteWithdrawal({
-    assetId: usdc.assetId,
-    amount: '25',
-    recipient,
-  });
-  if (quote === undefined) {
-    throw new Error('No quote');
-  }
-  console.log(`${quote.output.amount} goes to ${quote.recipient}`);
-  // #endregion withdraw-quote
-
-  // #region withdraw-send
-  const { payment, transaction } = await client.withdraw({ quote });
-  console.log(`${payment.paymentId}: sent in ${transaction.transactionHash}`);
-  // #endregion withdraw-send
-  return payment;
 }
 
 export async function bridgeVerify(
@@ -89,19 +64,5 @@ export async function bridgeVerify(
 
   const payment = await client.createDeposit({ quote, verify });
   // #endregion bridge-verify
-  return payment;
-}
-
-export async function followPayment(client: SecureClient, paymentId: string) {
-  // #region bridge-follow
-  const payment = await client.fetchBridgePayment({ paymentId });
-  console.log(`${payment.paymentId}: ${payment.status}`);
-
-  const { items } = await client.listBridgePayments().firstPage();
-
-  for (const p of items) {
-    console.log(`${p.direction} ${p.paymentId}: ${p.status}`);
-  }
-  // #endregion bridge-follow
   return payment;
 }

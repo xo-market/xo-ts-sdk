@@ -32,7 +32,7 @@ On-chain actions are named for the action: `mergePositions`, `redeemPositions`, 
 A method takes one request object, or nothing. There are no positional ids. A read then takes an
 optional last argument, `{ signal, timeout, retries }`, for that call alone.
 
-<!-- snippet: docs/snippets/production.ts#request-options -->
+<!-- snippet: docs/snippets/markets.ts#request-options -->
 ```ts
 const book = await client.fetchOrderBook(
   { assetId },

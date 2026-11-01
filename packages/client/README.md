@@ -27,14 +27,14 @@ for (const market of page.items) {
 }
 ```
 
-To trade, follow the [Quickstart](https://docs.xo.market/typescript-sdk/quickstart).
+To trade, follow [Place your first order](https://docs.xo.market/typescript-sdk/quickstart).
 
 ## Documentation
 
-- [Overview](https://docs.xo.market/typescript-sdk/overview)
-- [Quickstart](https://docs.xo.market/typescript-sdk/quickstart)
-- [Markets and prices](https://docs.xo.market/typescript-sdk/markets)
-- [Orders](https://docs.xo.market/typescript-sdk/orders)
+- [TypeScript SDK](https://docs.xo.market/typescript-sdk/overview)
+- [Place your first order](https://docs.xo.market/typescript-sdk/quickstart)
+- [Market data](https://docs.xo.market/typescript-sdk/markets)
+- [Place orders](https://docs.xo.market/typescript-sdk/place-orders)
 - [Errors](https://docs.xo.market/typescript-sdk/errors)
 - [API reference](https://docs.xo.market/typescript-sdk/reference/overview)
 

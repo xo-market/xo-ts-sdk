@@ -67,11 +67,11 @@ export async function liveWithResync(client: SecureClient, assetIds: string[]) {
   ]);
 
   const readAgain = async (topic?: SubscriptionTopic) => {
-    if (topic === 'market' || topic === undefined) {
+    if (topic !== 'user') {
       const books = await client.fetchOrderBooks({ assetIds });
       console.log(`read ${books.length} books again`);
     }
-    if (topic === 'user' || topic === undefined) {
+    if (topic !== 'market') {
       for await (const page of client.listOpenOrders()) {
         console.log(`read ${page.items.length} open orders again`);
       }

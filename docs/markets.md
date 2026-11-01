@@ -1,4 +1,4 @@
-# Markets and prices
+# Market data
 
 ## Create a client
 
@@ -7,8 +7,7 @@
 const client = createPublicClient();
 ```
 
-Create one client when your app starts and reuse it. Public reads are rate limited per IP
-address, so cache what you show your users. See [rate limits](/api-reference/rate-limits).
+Create one client and reuse it.
 
 ## List markets
 
@@ -23,14 +22,11 @@ for (const market of page.items) {
 }
 ```
 
-`listMarkets` returns open markets. For every filter and sort order, see
-[`ListMarketsRequest`](reference/client/type-aliases/ListMarketsRequest.md).
-
-A market from a list has no prices or tick size. Fetch the market to get them.
+`listMarkets` returns open markets. See
+[`ListMarketsRequest`](reference/client/type-aliases/ListMarketsRequest.md) for its filters and
+sorts. A market from a list has no prices or tick size. `fetchMarket` has them.
 
 ## Read every page
-
-Every `list*` method returns pages. Loop over them with `for await`:
 
 <!-- snippet: docs/snippets/markets.ts#pagination -->
 ```ts
@@ -41,8 +37,7 @@ for await (const page of client.listMarkets({ pageSize: 50 })) {
 }
 ```
 
-To read one page, call `firstPage()`. To carry on later, save `page.nextCursor` and pass it to
-`from(cursor)`.
+To carry on later, pass `page.nextCursor` to `from(cursor)`.
 
 ## Get one market
 
@@ -55,13 +50,13 @@ console.log('YES token:', market.outcomes.yes.tokenId);
 console.log('Tick size:', market.trading.minimumTickSize);
 ```
 
-You can look a market up by `id`, `slug`, `url` or `conditionId`. Each is used in different places:
+Look a market up by `id`, `slug`, `url` or `conditionId`.
 
 | Field | Use it for |
 | --- | --- |
 | `id` | `fetchMarket`, trades and PnL |
 | `slug` | The market's link on XO |
-| `conditionId` | Live data, cancelling a market's orders, redeeming |
+| `conditionId` | Real-time data, cancelling a market's orders, redeeming |
 | `outcomes.yes.tokenId`, `outcomes.no.tokenId` | Prices, order books and orders, as `assetId` |
 
 ## Check that a market takes orders
@@ -72,12 +67,11 @@ const { ok, reasons } = await client.fetchMarketTradability({ conditionId });
 console.log(ok ? 'tradable' : `not tradable: ${reasons.join(', ')}`);
 ```
 
-Call this before you trade. If `ok` is false, `reasons` says why, for example `expired`.
+Call this before you trade. If `ok` is false, `reasons` says why, such as `expired`.
 
 ## Read prices
 
-Read prices for the YES token. A midpoint of `0.68` means a 68% chance, and the NO price is
-1 minus the YES price.
+A YES midpoint of `0.68` means a 68% chance, and the NO price is 1 minus the YES price.
 
 <!-- snippet: docs/snippets/markets.ts#prices -->
 ```ts
@@ -91,8 +85,8 @@ const [midpoint, bestBid, spread, lastTrade] = await Promise.all([
 console.log({ midpoint, bestBid, spread, lastTrade: lastTrade?.price });
 ```
 
-A price is `null` when there is none, for example when one side of the book is empty. Show
-"no price", not 0%.
+A price is `null` when there is none, as with an empty side of the book. Show "no price",
+not 0%.
 
 ## Price many markets at once
 
@@ -108,7 +102,7 @@ for (const assetId of assetIds) {
 }
 ```
 
-`fetchPrices`, `fetchSpreads` and `fetchOrderBooks` take a list too.
+`fetchPrices`, `fetchSpreads`, `fetchLastTradePrices` and `fetchOrderBooks` take a list too.
 
 ## Read the order book
 
@@ -124,7 +118,7 @@ Each side is sorted with the best price last.
 
 ## Events
 
-Some markets belong to an event, such as a match with one market for each result.
+An event groups markets, such as a match with one market for each result.
 
 <!-- snippet: docs/snippets/markets.ts#event-markets -->
 ```ts
@@ -155,8 +149,32 @@ for (const pool of items) {
 }
 ```
 
+## Set timeouts and retries
+
+<!-- snippet: docs/snippets/markets.ts#request-options -->
+```ts
+const book = await client.fetchOrderBook(
+  { assetId },
+  { timeout: 5_000, retries: 0, signal },
+);
+```
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `timeout` | 30 000 ms | Limit on each attempt, or `false` for none |
+| `retries` | 2 | Tries a failed read again, 0 to 5 times |
+| `signal` | None | Cancels the call |
+
+Reads take these. Orders, cancels, transactions and payments are sent once and never retried.
+
+## Stay under the rate limits
+
+Public reads are rate limited per IP address, so cache them. See the
+[Orderbook API](/api-reference/rate-limits) and [Data API](/data-api-reference/rate-limits)
+limits.
+
 ## Next steps
 
-- [Place an order](orders.md)
-- [Stream live prices](realtime.md)
+- [Place an order](place-orders.md)
+- [Stream real-time data](realtime.md)
 - [All public reads](reference/client/interfaces/PublicClient.md)

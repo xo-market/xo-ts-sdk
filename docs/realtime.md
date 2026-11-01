@@ -1,4 +1,13 @@
-# Live data
+# Real-time data
+
+| Topic | Needs a key? | What it streams |
+| --- | --- | --- |
+| `market` | No | Order books, price changes and last trade prices |
+| `activity` | No | Each new fill of one market |
+| `user` | Yes | Your orders and trades in every market |
+| `portfolio` | Yes | Your positions when they change |
+
+For `user` and `portfolio`, use a client from `createSecureClient`.
 
 ## Stream an order book
 
@@ -18,16 +27,13 @@ for await (const event of handle) {
 await handle.close();
 ```
 
-The `market` topic needs no key. Pass condition ids as `markets`, or outcome tokens as `assetIds`.
-A `book` event is the whole book of one token, best price last, so replace your copy with each
-one. The topic also sends `price_change` and `last_trade_price` events: switch on `event.type`.
+Pass condition ids as `markets` or token ids as `assetIds`. A `book` event is the whole book
+of one token, best price last, so replace your copy with each one.
 
-Leaving the loop does not close the stream, and an open stream keeps your process running. Call
-`handle.close()` when you are done, or `client.closeSubscriptions()` to close them all.
+An open stream keeps your process running after you leave the loop.
+`client.closeSubscriptions()` closes every stream.
 
 ## Stream your orders and fills
-
-The `user` topic needs a client from `createSecureClient`. It covers every market.
 
 <!-- snippet: docs/snippets/realtime.ts#realtime-orders -->
 ```ts
@@ -42,11 +48,12 @@ for await (const event of handle) {
 }
 ```
 
-An order's `kind` is `PLACEMENT`, `UPDATE` (a fill), `CANCELLATION` or `REJECTED`. A trade is
-`MATCHED`, then `MINED` and `CONFIRMED` as it settles, or `FAILED` if the fill was undone.
+An order's `kind` is `PLACEMENT`, `UPDATE` (a fill), `CANCELLATION` or `REJECTED`. A trade's
+`status` goes from `MATCHED` through `MINED` to `CONFIRMED`, or to `FAILED` if the fill was
+undone.
 
-Open one `user` stream per process, keep it open and share it. Each one takes one of your
-account's WebSocket slots.
+Open one long-lived `user` stream per process and share it. Each takes one of your account's
+WebSocket slots.
 
 ## Stream your positions
 
@@ -59,8 +66,7 @@ for await (const event of handle) {
 }
 ```
 
-The `portfolio` topic also needs a secure client. Each event holds all your positions, as
-`listPositions()` lists them, in your first 100 markets.
+Each event lists your positions in your first 100 markets.
 
 ## Stream a market's fills
 
@@ -75,12 +81,11 @@ for await (const event of handle) {
 }
 ```
 
-The `activity` topic needs no key. It takes the market's `id`, not its condition id.
+The `activity` topic takes the market's `id`, not its condition id.
 
 ## Catch up after a reconnect
 
-A stream reconnects by itself, but it does not replay what it missed. Your loop does not see
-this, so listen on the handle.
+A stream reconnects by itself but does not replay what it missed.
 
 <!-- snippet: docs/snippets/realtime.ts#realtime-resync -->
 ```ts
@@ -90,11 +95,11 @@ const handle = await client.subscribe([
 ]);
 
 const readAgain = async (topic?: SubscriptionTopic) => {
-  if (topic === 'market' || topic === undefined) {
+  if (topic !== 'user') {
     const books = await client.fetchOrderBooks({ assetIds });
     console.log(`read ${books.length} books again`);
   }
-  if (topic === 'user' || topic === undefined) {
+  if (topic !== 'market') {
     for await (const page of client.listOpenOrders()) {
       console.log(`read ${page.items.length} open orders again`);
     }
@@ -114,12 +119,12 @@ handle.on('error', (error) => {
 });
 ```
 
-After `'reconnected'` or `ws_events_dropped`, read that topic's state again: `fetchOrderBooks`
-for `market`, `listOpenOrders` for `user`, `listPositions` for `portfolio`. `subscription_overflow`
-means your loop fell behind. It names no topic, so read them all. See [Errors](errors.md).
+After `'reconnected'` or `ws_events_dropped`, read that topic again: `fetchOrderBooks` for
+`market`, `listOpenOrders` for `user`, `listPositions` for `portfolio`.
+`subscription_overflow` means your loop fell behind, so read every topic. See [Errors](errors.md).
 
 ## Next steps
 
-- [Place an order](orders.md)
-- [Read your portfolio](portfolio.md)
+- [Place an order](place-orders.md)
+- [Read your positions](positions.md)
 - [Every event type](reference/client/type-aliases/SubscriptionEvent.md)
