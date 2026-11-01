@@ -18,6 +18,18 @@ The outcome token to sell: `outcomes.yes.tokenId` or `outcomes.no.tokenId` of a 
 
 ***
 
+### minPrice?
+
+```ts
+optional minPrice?: number | string;
+```
+
+The lowest price per share to take: the order only fills at this price or better. From
+0.001 to 0.999, a multiple of the market's tick size. Without it the order takes any price
+down to 0.001.
+
+***
+
 ### orderType?
 
 ```ts

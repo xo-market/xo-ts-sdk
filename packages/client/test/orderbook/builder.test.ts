@@ -1075,3 +1075,173 @@ describe('buildMarketOrder', () => {
     expect(a.order.salt).toBeLessThan(2n ** 64n);
   });
 });
+
+describe('buildMarketOrder: a worst price', () => {
+  test('BUY with maxPrice is signed at that price: 1 USDC at 0.04 buys up to 25 shares', async () => {
+    const { ctx } = makeCtx();
+    const { order } = await buildMarketOrder(
+      market({ amount: '1', maxPrice: '0.04' }),
+      ctx,
+    );
+    expect(order.makerAmount).toBe(1_000_000n);
+    expect(order.takerAmount).toBe(25_000_000n);
+    expect(gatewayTick('BUY', order.makerAmount, order.takerAmount)).toBe(40n);
+  });
+
+  test('BUY: the taker is floor(maker * 1000 / cap) and always reads back as the cap', async () => {
+    const { ctx } = makeCtx();
+    for (const [amount, maxPrice, cap] of [
+      ['4.1', '0.57', 570n],
+      ['10.123457', '0.333', 333n],
+      ['0.999', '0.999', 999n],
+      ['99999.999999', '0.001', 1n],
+    ] as const) {
+      const { order } = await buildMarketOrder(
+        market({ amount, maxPrice }),
+        ctx,
+      );
+      expect(order.takerAmount).toBe((order.makerAmount * 1000n) / cap);
+      expect(gatewayTick('BUY', order.makerAmount, order.takerAmount)).toBe(
+        cap,
+      );
+    }
+  });
+
+  test('SELL with minPrice is signed at that price: 5.5 shares for at least 0.6 each', async () => {
+    const { ctx } = makeCtx();
+    const { order } = await buildMarketOrder(
+      market({ side: 'SELL', amount: '5.5', minPrice: '0.6' }),
+      ctx,
+    );
+    expect(order.makerAmount).toBe(5_500_000n);
+    expect(order.takerAmount).toBe(3_300_000n);
+    expect(gatewayTick('SELL', order.makerAmount, order.takerAmount)).toBe(
+      600n,
+    );
+  });
+
+  test('BUY: the smallest amount buys 1 share at the cap', async () => {
+    const { ctx } = makeCtx();
+    const { order } = await buildMarketOrder(
+      market({ amount: '0.5', maxPrice: '0.5' }),
+      ctx,
+    );
+    expect(order.takerAmount).toBe(1_000_000n);
+    const error = await expectInvalidAsync(
+      () =>
+        buildMarketOrder(market({ amount: '0.499999', maxPrice: '0.5' }), ctx),
+      'amount',
+    );
+    expect(error.message).toBe(
+      'amount must be at least 0.5 USDC (1 share at the 0.5 cap)',
+    );
+  });
+
+  test('a cap is checked against the market tick size, once, before anything is signed', async () => {
+    const tickSize = vi.fn(async (_tokenId: string) => '0.01');
+    const { ctx, nonce, signTypedData } = makeCtx({ tickSize });
+    const error = await expectInvalidAsync(
+      () => buildMarketOrder(market({ maxPrice: '0.045' }), ctx),
+      'maxPrice',
+    );
+    expect(error.message).toBe(
+      'maxPrice must be a multiple of the market tick size 0.01',
+    );
+    await expectInvalidAsync(
+      () =>
+        buildMarketOrder(
+          market({ side: 'SELL', amount: '2', minPrice: '0.015' }),
+          ctx,
+        ),
+      'minPrice',
+    );
+    expect(nonce).not.toHaveBeenCalled();
+    expect(signTypedData).not.toHaveBeenCalled();
+    const { order } = await buildMarketOrder(market({ maxPrice: '0.05' }), ctx);
+    expect(gatewayTick('BUY', order.makerAmount, order.takerAmount)).toBe(50n);
+    expect(tickSize).toHaveBeenCalledTimes(3);
+    expect(tickSize).toHaveBeenCalledWith(BigInt(TOKEN).toString());
+  });
+
+  test('maxPrice is for a buy and minPrice for a sell: the other side refuses them', async () => {
+    const { ctx, nonce } = makeCtx();
+    const sell = await expectInvalidAsync(
+      () =>
+        buildMarketOrder(
+          market({ side: 'SELL', amount: '2', maxPrice: '0.5' }),
+          ctx,
+        ),
+      'maxPrice',
+    );
+    expect(sell.message).toBe(
+      'maxPrice is for a market buy; a market sell takes minPrice',
+    );
+    const buy = await expectInvalidAsync(
+      () => buildMarketOrder(market({ minPrice: '0.5' }), ctx),
+      'minPrice',
+    );
+    expect(buy.message).toBe(
+      'minPrice is for a market sell; a market buy takes maxPrice',
+    );
+    expect(nonce).not.toHaveBeenCalled();
+  });
+
+  test.each(['0', '1', '0.0001', '1.5', '-0.5', 'abc', ''])(
+    'a cap of %j is refused, never rounded',
+    async (maxPrice) => {
+      const { ctx, nonce, tickSize } = makeCtx();
+      await expectInvalidAsync(
+        () => buildMarketOrder(market({ maxPrice }), ctx),
+        'maxPrice',
+      );
+      expect(tickSize).not.toHaveBeenCalled();
+      expect(nonce).not.toHaveBeenCalled();
+    },
+  );
+
+  test('a cap at the extreme price is the same order as no cap, with no tick-size lookup', async () => {
+    const { ctx, tickSize } = makeCtx();
+    const capped = await buildMarketOrder(
+      market({ amount: '4.1', maxPrice: '0.999' }),
+      ctx,
+    );
+    const plain = await buildMarketOrder(market({ amount: '4.1' }), ctx);
+    expect(capped.order.makerAmount).toBe(plain.order.makerAmount);
+    expect(capped.order.takerAmount).toBe(plain.order.takerAmount);
+    const sell = await buildMarketOrder(
+      market({ side: 'SELL', amount: '5', minPrice: '0.001' }),
+      ctx,
+    );
+    expect(
+      gatewayTick('SELL', sell.order.makerAmount, sell.order.takerAmount),
+    ).toBe(1n);
+    expect(tickSize).not.toHaveBeenCalled();
+  });
+
+  test('a capped order with an amount too small for one share is refused before the tick-size lookup', async () => {
+    const { ctx, nonce, tickSize } = makeCtx();
+    const error = await expectInvalidAsync(
+      () => buildMarketOrder(market({ amount: '0.1', maxPrice: '0.5' }), ctx),
+      'amount',
+    );
+    expect(error.message).toBe(
+      'amount must be at least 0.5 USDC (1 share at the 0.5 cap)',
+    );
+    expect(tickSize).not.toHaveBeenCalled();
+    expect(nonce).not.toHaveBeenCalled();
+  });
+
+  test('a failed tick-size read stops the build before the nonce and the signature', async () => {
+    const failure = new Error('tick size unavailable');
+    const { ctx, nonce, signTypedData } = makeCtx({
+      tickSize: async () => {
+        throw failure;
+      },
+    });
+    await expect(
+      buildMarketOrder(market({ maxPrice: '0.5' }), ctx),
+    ).rejects.toBe(failure);
+    expect(nonce).not.toHaveBeenCalled();
+    expect(signTypedData).not.toHaveBeenCalled();
+  });
+});

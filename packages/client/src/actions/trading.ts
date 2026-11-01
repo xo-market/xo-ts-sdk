@@ -523,6 +523,12 @@ export type MarketBuyOrderRequest = {
   /** How many dollars to spend, with at most 6 decimals. */
   amount: number | string;
   /**
+   * The highest price per share to pay: the order only fills at this price or better. From
+   * 0.001 to 0.999, a multiple of the market's tick size. Without it the order takes any price
+   * up to 0.999.
+   */
+  maxPrice?: number | string;
+  /**
    * What happens to the part that does not fill at once: `OrderType.FAK` (the default) drops it,
    * `OrderType.FOK` drops the whole order unless all of it fills.
    */
@@ -537,6 +543,12 @@ export type MarketSellOrderRequest = {
   side: OrderSide.SELL;
   /** How many shares to sell: at least 1, with at most 6 decimals. */
   shares: number | string;
+  /**
+   * The lowest price per share to take: the order only fills at this price or better. From
+   * 0.001 to 0.999, a multiple of the market's tick size. Without it the order takes any price
+   * down to 0.001.
+   */
+  minPrice?: number | string;
   /** What happens to the part that does not fill at once: see {@link MarketBuyOrderRequest}. */
   orderType?: OrderType.FAK | OrderType.FOK;
 };
@@ -558,6 +570,8 @@ const CreateMarketOrderSchema = z
     side: fields.side(),
     amount: quantity().optional(),
     shares: quantity().optional(),
+    maxPrice: quantity().optional(),
+    minPrice: quantity().optional(),
     orderType: fields.oneOf(['FAK', 'FOK']).optional(),
   })
   .superRefine((value, ctx) => {
@@ -579,6 +593,15 @@ const CreateMarketOrderSchema = z
         input: value,
       });
     }
+    const otherCap = value.side === 'BUY' ? 'minPrice' : 'maxPrice';
+    if (record[otherCap] !== undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [otherCap],
+        message: `is not for a market ${value.side === 'BUY' ? 'buy: its worst price is maxPrice' : 'sell: its worst price is minPrice'}`,
+        input: value,
+      });
+    }
   });
 
 async function signMarket(
@@ -594,6 +617,8 @@ async function signMarket(
     amount: (input.side === 'BUY' ? input.amount : input.shares) as
       | number
       | string,
+    ...(input.maxPrice === undefined ? {} : { maxPrice: input.maxPrice }),
+    ...(input.minPrice === undefined ? {} : { minPrice: input.minPrice }),
     ...(input.orderType === undefined ? {} : { type: input.orderType }),
   });
 }

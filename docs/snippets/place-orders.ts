@@ -46,12 +46,14 @@ export async function placeMarket(client: SecureClient, assetId: string) {
     assetId,
     side: OrderSide.BUY,
     amount: '5', // spends up to 5 USDC
+    maxPrice: '0.6', // never pays more than 0.6 a share
   });
 
   const sold = await client.placeMarketOrder({
     assetId,
     side: OrderSide.SELL,
     shares: '5',
+    minPrice: '0.4', // never takes less than 0.4 a share
     orderType: OrderType.FOK, // all 5 shares, or none
   });
   // #endregion market-order

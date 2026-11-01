@@ -3,7 +3,6 @@ import { normalizeAddress } from '../core/address';
 import {
   fromMicro,
   priceToTick,
-  tickToPrice,
   toMicro,
   type WholeUnits,
 } from '../core/decimal';
@@ -74,9 +73,9 @@ export interface LimitOrderArgs<
 }
 
 /**
- * A market order. It is a limit order at the worst price: 0.999 for BUY and 0.001 for SELL.
- * The amount is whole units: a {@link RawUnitsString} is refused at compile time, as for
- * {@link LimitOrderArgs}.
+ * A market order. It is a limit order at the worst price the caller accepts: `maxPrice` for
+ * BUY and `minPrice` for SELL, or 0.999 and 0.001 without one. The amount is whole units: a
+ * {@link RawUnitsString} is refused at compile time, as for {@link LimitOrderArgs}.
  */
 export interface MarketOrderArgs<A extends string | number = string | number> {
   /** The outcome token: a decimal string (uint256). A number would lose precision and is refused. */
@@ -84,6 +83,16 @@ export interface MarketOrderArgs<A extends string | number = string | number> {
   side: Side;
   /** BUY: the USDC to spend. SELL: the shares to sell (at least 1). At most 6 decimals. */
   amount: WholeUnits<A>;
+  /**
+   * BUY only: the highest price per share to pay, `0.001` to `0.999` and a multiple of the
+   * market's tick size. Defaults to 0.999.
+   */
+  maxPrice?: number | string;
+  /**
+   * SELL only: the lowest price per share to take, `0.001` to `0.999` and a multiple of the
+   * market's tick size. Defaults to 0.001.
+   */
+  minPrice?: number | string;
   /** Defaults to `'FAK'`. */
   type?: 'FAK' | 'FOK';
 }
@@ -108,7 +117,10 @@ export interface BuilderContext {
   signer: InternalSigner;
   /** The trader's current exchange nonce (`CTFExchange.nonces(maker)`). Called once per build. */
   nonce: () => Promise<bigint>;
-  /** The market's tick size as a decimal string, such as `"0.001"`. Called once per limit build. */
+  /**
+   * The market's tick size as a decimal string, such as `"0.001"`. Called once per limit build,
+   * and once per market build with a worst price other than the extreme one.
+   */
   tickSize: (tokenId: string) => Promise<string>;
   /** The server-synced clock, in unix seconds. Every "now" check uses it, never `Date.now`. */
   nowSec: () => number;
@@ -377,13 +389,11 @@ function ceilDiv(numerator: bigint, denominator: bigint): bigint {
 }
 
 /**
- * The smallest market BUY `amount` (micro-USDC) that buys the minimum size at the cap:
- * the least `m` with `floor(m * 1000 / 999) >= MIN_SIZE_MICRO`.
+ * The smallest market BUY `amount` (micro-USDC) that buys the minimum size at the cap
+ * `tick`: the least `m` with `floor(m * 1000 / tick) >= MIN_SIZE_MICRO`.
  */
-const MIN_MARKET_BUY_AMOUNT = ceilDiv(
-  MIN_SIZE_MICRO * MARKET_BUY_TICK,
-  TICK_DENOM,
-);
+const minMarketBuyAmount = (tick: bigint): bigint =>
+  ceilDiv(MIN_SIZE_MICRO * tick, TICK_DENOM);
 
 /**
  * Runs {@link validateOrderSize} on the order size behind a market `amount` and words a
@@ -401,7 +411,7 @@ function validateAmountSize(side: Side, tick: bigint, size: bigint): void {
     if (size < MIN_SIZE_MICRO) {
       message =
         side === 'BUY'
-          ? `amount must be at least ${fromMicro(MIN_MARKET_BUY_AMOUNT)} USDC (1 share at the ${tickToPrice(MARKET_BUY_TICK)} cap)`
+          ? `amount must be at least ${fromMicro(minMarketBuyAmount(tick))} USDC (1 share at the ${fromMicro((tick * 1_000_000n) / TICK_DENOM)} cap)`
           : 'amount must be at least 1 share';
     } else if (size > U64_MAX) {
       message = `amount is too large: it would exceed the u64 limit (${U64_MAX} micro-units)`;
@@ -430,42 +440,65 @@ function assertCapTick(
   }
 }
 
-/** BUY: spend `amount` USDC (the maker side) for as many shares as 0.999 buys, rounded down. */
-function marketBuyAmounts(amount: bigint) {
+/** BUY: spend `amount` USDC (the maker side) for as many shares as the cap buys, rounded down. */
+function marketBuyAmounts(amount: bigint, cap: bigint) {
   const makerAmount = amount;
-  const takerAmount = (makerAmount * TICK_DENOM) / MARKET_BUY_TICK;
+  const takerAmount = (makerAmount * TICK_DENOM) / cap;
   // First: it rejects a tiny amount (taker below 1 share) with a message the caller can act on.
-  validateAmountSize('BUY', MARKET_BUY_TICK, takerAmount);
-  assertCapTick('BUY', MARKET_BUY_TICK, makerAmount, takerAmount);
+  validateAmountSize('BUY', cap, takerAmount);
+  assertCapTick('BUY', cap, makerAmount, takerAmount);
   return { makerAmount, takerAmount };
 }
 
-/** SELL: give `amount` shares (the maker side) for at least 0.001 USDC each, rounded down. */
-function marketSellAmounts(amount: bigint) {
-  validateAmountSize('SELL', MARKET_SELL_TICK, amount);
-  const amounts = deriveAmounts('SELL', MARKET_SELL_TICK, amount);
-  assertCapTick(
-    'SELL',
-    MARKET_SELL_TICK,
-    amounts.makerAmount,
-    amounts.takerAmount,
-  );
+/** SELL: give `amount` shares (the maker side) for at least the cap each, rounded down. */
+function marketSellAmounts(amount: bigint, cap: bigint) {
+  validateAmountSize('SELL', cap, amount);
+  const amounts = deriveAmounts('SELL', cap, amount);
+  assertCapTick('SELL', cap, amounts.makerAmount, amounts.takerAmount);
   return amounts;
 }
 
 /**
- * Builds and signs a market order: a limit order at the worst price, 0.999 for BUY and
- * 0.001 for SELL, so it fills at the best prices available and never above or below the
- * cap. The type is `'FAK'` unless `'FOK'` is given, `postOnly` is never set and the
+ * The worst price the caller set for a market order, as a tick: `maxPrice` for a BUY,
+ * `minPrice` for a SELL, or `undefined` without one. The field of the other side is refused.
+ */
+function marketCap(
+  side: Side,
+  a: MarketOrderArgs,
+): { tick: bigint; field: 'maxPrice' | 'minPrice' } | undefined {
+  if (side === 'BUY' && a.minPrice !== undefined) {
+    throw new UserInputError(
+      'minPrice is for a market sell; a market buy takes maxPrice',
+    );
+  }
+  if (side === 'SELL' && a.maxPrice !== undefined) {
+    throw new UserInputError(
+      'maxPrice is for a market buy; a market sell takes minPrice',
+    );
+  }
+  const field = side === 'BUY' ? 'maxPrice' : 'minPrice';
+  const value = a[field];
+  return value === undefined
+    ? undefined
+    : { tick: priceToTick(value, field), field };
+}
+
+/**
+ * Builds and signs a market order: a limit order at the worst price the caller accepts, so
+ * it fills at the best prices available and never above or below it. The worst price is
+ * `maxPrice` for a BUY and `minPrice` for a SELL, or the extremes 0.999 and 0.001 without
+ * them. The type is `'FAK'` unless `'FOK'` is given, `postOnly` is never set and the
  * expiration is 0.
  *
  * - BUY: `amount` is USDC. `makerAmount = amount` and `takerAmount =
- *   floor(makerAmount * 1000 / 999)`, which the gateway reads back as tick 999.
+ *   floor(makerAmount * 1000 / cap)`, which the gateway reads back as the cap tick.
  * - SELL: `amount` is shares, at least 1. `makerAmount = amount` and `takerAmount =
- *   floor(makerAmount / 1000)`, which the gateway reads back as tick 1.
+ *   floor(makerAmount * cap / 1000)`, which the gateway reads back as the cap tick.
  *
- * Nothing is rounded: an amount with more than 6 decimals is refused. The cap prices are
- * fixed, so no tick-size lookup is made.
+ * Nothing is rounded: an amount with more than 6 decimals, or a worst price that is not a
+ * multiple of the market's tick size, is refused. Only a worst price other than the extreme
+ * one needs the tick-size lookup; it runs after every other check and before anything is
+ * signed. A worst price of 0.999 to buy or 0.001 to sell is the same order as none.
  *
  * @throws {UserInputError} For any invalid input, starting with the field name.
  */
@@ -486,13 +519,28 @@ export async function buildMarketOrder(
   if (extra.expiration !== undefined) {
     throw new UserInputError('expiration is not supported for market orders');
   }
+  const cap = marketCap(side, a);
+  const extreme = side === 'BUY' ? MARKET_BUY_TICK : MARKET_SELL_TICK;
+  const tick = cap?.tick ?? extreme;
 
   const amount = toMicro(a.amount, 'amount');
   if (amount <= 0n) {
     throw new UserInputError('amount must be greater than zero');
   }
   const { makerAmount, takerAmount } =
-    side === 'BUY' ? marketBuyAmounts(amount) : marketSellAmounts(amount);
+    side === 'BUY'
+      ? marketBuyAmounts(amount, tick)
+      : marketSellAmounts(amount, tick);
+
+  if (cap !== undefined && cap.tick !== extreme) {
+    const tickSizeText = await ctx.tickSize(tokenId.toString());
+    const step = priceToTick(tickSizeText, 'tickSize');
+    if (cap.tick % step !== 0n) {
+      throw new UserInputError(
+        `${cap.field} must be a multiple of the market tick size ${tickSizeText}`,
+      );
+    }
+  }
 
   return signOrder(ctx, {
     tokenId,

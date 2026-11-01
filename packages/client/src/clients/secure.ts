@@ -486,21 +486,30 @@ export interface SecureClient extends PublicClient {
   /**
    * Builds and signs a market order without sending it. A buy spends an `amount` of dollars
    * and a sell gives a number of `shares`, at the best prices on the book: the order is a limit
-   * order at the worst price, 0.999 to buy and 0.001 to sell. It is fill-and-kill (the part
-   * that does not fill at once is dropped) unless `orderType` is `OrderType.FOK` (all of it
-   * fills at once, or none). Send it with {@link postOrder}.
+   * order at the worst price you accept. That is `maxPrice` for a buy and `minPrice` for a
+   * sell; without them it is 0.999 to buy and 0.001 to sell, so the order takes whatever the
+   * book offers. It is fill-and-kill (the part that does not fill at once is dropped) unless
+   * `orderType` is `OrderType.FOK` (all of it fills at once, or none). Send it with
+   * {@link postOrder}.
    *
-   * @param request - The outcome token (`assetId`), the `side`, and the `amount` of a buy or the
-   *   `shares` of a sell. See {@link CreateMarketOrderRequest}.
+   * A buy must be worth at least one share at its worst price: 0.999 dollars without
+   * `maxPrice`.
+   *
+   * @param request - The outcome token (`assetId`), the `side`, the `amount` of a buy or the
+   *   `shares` of a sell, and `maxPrice` or `minPrice` when wanted. See
+   *   {@link CreateMarketOrderRequest}.
    * @throws {CreateMarketOrderError} `invalid_input` for a request that is not valid (`shares`
-   *   on a buy, `amount` on a sell, an amount below one share's worth), `client_closed` after
+   *   on a buy, `amount` on a sell, `minPrice` on a buy, `maxPrice` on a sell, a worst price off
+   *   the market's tick size, an amount below one share's worth), `client_closed` after
    *   {@link close} or {@link endAuthentication}, a `SigningError` when the wallet does not
-   *   sign, and `nonce_unavailable` when the exchange nonce cannot be read.
+   *   sign, and the errors of reading the tick size (only with a worst price) or the exchange
+   *   nonce (`nonce_unavailable`).
    * @example
    * const order = await client.createMarketOrder({
    *   assetId,
    *   side: OrderSide.BUY,
    *   amount: 10,
+   *   maxPrice: '0.6',
    * });
    * console.log(order.orderType);
    */
@@ -543,8 +552,9 @@ export interface SecureClient extends PublicClient {
    * it waits out the taker delay and can still fill, so it is not a refusal. Read what filled
    * with {@link listAccountTrades}, or look the order up with {@link reconcileOrder}.
    *
-   * @param request - The outcome token (`assetId`), the `side`, and the `amount` of a buy or the
-   *   `shares` of a sell. See {@link CreateMarketOrderRequest}.
+   * @param request - The outcome token (`assetId`), the `side`, the `amount` of a buy or the
+   *   `shares` of a sell, and `maxPrice` or `minPrice` when wanted. See
+   *   {@link CreateMarketOrderRequest}.
    * @throws {PlaceMarketOrderError} The errors of {@link createMarketOrder}, before anything is
    *   sent, and those of sending the order, as for {@link placeLimitOrder}: when
    *   `mayHaveLanded` is `true`, never place it again; look it up with {@link reconcileOrder}.
@@ -553,6 +563,7 @@ export interface SecureClient extends PublicClient {
    *   assetId,
    *   side: OrderSide.SELL,
    *   shares: 5,
+   *   minPrice: '0.4',
    * });
    * console.log(response.ok ? response.status : response.code);
    */

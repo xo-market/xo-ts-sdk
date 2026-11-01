@@ -547,9 +547,45 @@ describe('createLimitOrder and createMarketOrder', () => {
     expect(sell.order.makerAmount).toBe(5_000_000n);
   });
 
+  test('a market buy never pays more than maxPrice; a market sell never takes less than minPrice', async () => {
+    const { client } = await rig();
+
+    const buy = await client.createMarketOrder({
+      assetId: TOKEN_YES,
+      side: OrderSide.BUY,
+      amount: '2',
+      maxPrice: '0.4',
+    });
+    const sell = await client.createMarketOrder({
+      assetId: TOKEN_YES,
+      side: OrderSide.SELL,
+      shares: 5,
+      minPrice: 0.6,
+    });
+
+    // Signed as limit orders at the worst price: 2 USDC buys at most 5 shares at 0.4, and 5
+    // shares sell for at least 3 USDC at 0.6.
+    expect(buy.order.makerAmount).toBe(2_000_000n);
+    expect(buy.order.takerAmount).toBe(5_000_000n);
+    expect(sell.order.makerAmount).toBe(5_000_000n);
+    expect(sell.order.takerAmount).toBe(3_000_000n);
+  });
+
   test.each([
     [{ assetId: TOKEN_YES, side: OrderSide.BUY, shares: 5 }, 'amount'],
     [{ assetId: TOKEN_YES, side: OrderSide.SELL, amount: 5 }, 'shares'],
+    [
+      { assetId: TOKEN_YES, side: OrderSide.BUY, amount: 5, minPrice: 0.5 },
+      'minPrice',
+    ],
+    [
+      { assetId: TOKEN_YES, side: OrderSide.SELL, shares: 5, maxPrice: 0.5 },
+      'maxPrice',
+    ],
+    [
+      { assetId: TOKEN_YES, side: OrderSide.BUY, amount: 5, maxPrice: 1.5 },
+      'maxPrice',
+    ],
     [
       {
         assetId: TOKEN_YES,
@@ -594,6 +630,27 @@ describe('createLimitOrder and createMarketOrder', () => {
     const posts = hits(trading, 'POST /order');
     expect(posts).toHaveLength(1);
     expect(bodyOf(posts[0])).toMatchObject({ orderType: 'FAK' });
+  });
+
+  test('placeMarketOrder with maxPrice posts the order signed at that price', async () => {
+    const { client, trading } = await rig();
+    trading.outcome = () => ({ rest: false, status: 'delayed' });
+
+    accepted(
+      await client.placeMarketOrder({
+        assetId: TOKEN_YES,
+        side: OrderSide.BUY,
+        amount: 10,
+        maxPrice: '0.25',
+      }),
+    );
+
+    const posts = hits(trading, 'POST /order');
+    expect(posts).toHaveLength(1);
+    expect(bodyOf(posts[0])).toMatchObject({
+      orderType: 'FAK',
+      order: { makerAmount: '10000000', takerAmount: '40000000' },
+    });
   });
 });
 
