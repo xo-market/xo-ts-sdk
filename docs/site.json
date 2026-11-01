@@ -11,8 +11,8 @@
         {
           "source": "README.md",
           "slug": "overview",
-          "sidebarTitle": "Overview",
-          "description": "Read XO markets, trade, and move money from your server."
+          "sidebarTitle": "TypeScript SDK",
+          "description": "Read markets, stream live data, trade and move funds from your server."
         },
         {
           "source": "install.md",
@@ -22,7 +22,8 @@
         {
           "source": "quickstart.md",
           "slug": "quickstart",
-          "description": "Go from a new key to your first order on XO."
+          "description": "Sign in, buy 1 USDC of an outcome and see your position.",
+          "sidebarTitle": "Place your first order"
         },
         {
           "source": "examples.md",
