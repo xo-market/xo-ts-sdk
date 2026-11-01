@@ -85,6 +85,9 @@ const [midpoint, bestBid, spread, lastTrade] = await Promise.all([
 console.log({ midpoint, bestBid, spread, lastTrade: lastTrade?.price });
 ```
 
+`fetchPrice` with `OrderSide.BUY` reads the best bid, the price you can sell at now. The price to
+buy at is the best ask: `OrderSide.SELL`.
+
 A price is `null` when there is none, as with an empty side of the book. Show "no price",
 not 0%.
 
