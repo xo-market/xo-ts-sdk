@@ -1,0 +1,62 @@
+name: Bug report
+description: Something in @xomarket/client does not work as documented.
+title: 'Bug: '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the report. Never paste a private key, an API key or a token.
+  - type: input
+    id: sdk-version
+    attributes:
+      label: SDK version
+      description: The version of `@xomarket/client` (`npm ls @xomarket/client`).
+      placeholder: 0.5.0
+    validations:
+      required: true
+  - type: input
+    id: runtime-version
+    attributes:
+      label: Node or Bun version
+      description: Output of `node --version` or `bun --version`.
+      placeholder: v22.12.0
+    validations:
+      required: true
+  - type: textarea
+    id: code
+    attributes:
+      label: Minimal code
+      description: The smallest code that shows the problem. Leave keys and secrets out.
+      render: typescript
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: What you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: What happened instead, with the output or the stack trace.
+    validations:
+      required: true
+  - type: input
+    id: error-code
+    attributes:
+      label: Error code
+      description: The `code` of the error the SDK threw. Write `none` if it threw nothing.
+      placeholder: smart_wallet_not_deployed
+    validations:
+      required: true
+  - type: input
+    id: request-id
+    attributes:
+      label: Request ID
+      description: The `requestId` of the error. Write `none` if it has none.
+    validations:
+      required: true

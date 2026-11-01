@@ -1,0 +1,20 @@
+name: Feature request
+description: Ask for a method, an option or a change in @xomarket/client.
+title: 'Feature: '
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-api
+    attributes:
+      label: Proposed API
+      description: How you would like to call it. A few lines of code are enough.
+      render: typescript
+    validations:
+      required: true

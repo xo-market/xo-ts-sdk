@@ -1,0 +1,24 @@
+name: Dependency review
+
+# Every pull request: a dependency it adds or updates may not carry a known vulnerability of
+# moderate severity or higher. The action reads the dependency graph of the base and of the head, so
+# it needs a public repository (a private one needs GitHub Advanced Security), and it writes
+# nothing. While the repository is private the job is skipped, not failed.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    name: Dependency review
+    if: github.event.repository.private == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: moderate

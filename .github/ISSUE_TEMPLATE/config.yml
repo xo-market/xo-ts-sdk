@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://docs.xo.market/typescript-sdk/overview
+    about: The guides and the API reference of the TypeScript SDK.

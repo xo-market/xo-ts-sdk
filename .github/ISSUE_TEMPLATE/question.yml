@@ -1,0 +1,23 @@
+name: Question or feedback
+description: Ask how something works, or tell us what you think of the SDK.
+title: 'Question: '
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The guides and the API reference are at https://docs.xo.market/typescript-sdk/overview.
+        Never paste a private key, an API key or a token.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question or feedback
+      description: What would you like to know, or tell us?
+    validations:
+      required: true
+  - type: input
+    id: sdk-version
+    attributes:
+      label: SDK version
+      description: The version of `@xomarket/client`, if it matters.
+      placeholder: 0.5.0
