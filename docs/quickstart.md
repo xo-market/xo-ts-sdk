@@ -4,7 +4,7 @@ This guide buys 1 USDC of YES in one market and shows your position. XO runs on 
 USDC is real. Use a wallet that holds only what you can afford to lose.
 
 You need the wallet's private key in `XO_PK` and at least 1 USDC in your XO account. To add USDC,
-see [Deposits and withdrawals](deposits-and-withdrawals.md).
+see [Deposit](deposit.md).
 
 ## 1. Sign in
 
@@ -73,4 +73,4 @@ for (const position of items) {
 A new position can take a few seconds to show while the trade settles.
 
 That's it: you placed your first order. Next, learn the other order types in
-[Orders](orders.md), or stream your fills with [Live data](realtime.md).
+[Place orders](place-orders.md), or stream your fills with [Real-time data](realtime.md).

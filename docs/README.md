@@ -32,6 +32,9 @@ yarn add @xomarket/client viem
 bun add @xomarket/client viem
 ```
 
+In TypeScript, set `moduleResolution` to `NodeNext`, `Node16` or `Bundler`. Signers are in
+`@xomarket/client/viem`, `fileStore` in `/node`, and low-level signing in `/signing`.
+
 Then create a public client and list some markets. Reading public data needs no key.
 
 <!-- snippet: docs/snippets/sdk-quickstart.ts#quickstart -->
@@ -46,6 +49,8 @@ for (const market of page.items) {
   console.log(`${market.id}: ${market.question}`);
 }
 ```
+
+More runnable scripts are in the [examples folder](../examples/scripts/README.md).
 
 ## Pagination
 
@@ -141,7 +146,7 @@ const client = await createSecureClient({
 });
 ```
 
-Keep the key on your server, never in your code. See [Wallets and sign-in](authentication.md) for
+Keep the key on your server, never in your code. See [Wallets and authentication](authentication.md) for
 saved keys, smart wallets and closing a client.
 
 ## Realtime subscriptions
@@ -167,4 +172,4 @@ for await (const event of stream) {
 - **[Read market data](markets.md)**: Markets, prices and order books.
 - **[Stream real-time data](realtime.md)**: Books, trades, orders and positions.
 - **[Place your first order](quickstart.md)**: From a key to a trade in five steps.
-- **[Wallets and sign-in](authentication.md)**: Keys, smart wallets and saved credentials.
+- **[Wallets and authentication](authentication.md)**: Keys, smart wallets and saved credentials.
