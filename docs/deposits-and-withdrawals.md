@@ -1,23 +1,11 @@
 # Deposits and withdrawals
 
-A secure client moves USDC into XO from another network and back out, through XO's bridge. A
-bridge payment is a deposit or a withdrawal, and every step reads the same way: ask for a quote,
-confirm it, then follow the payment.
-
 > [!WARNING]
-> Mainnet is real money. Send exactly `deposit.amount` of `deposit.assetId`, once, to
-> `deposit.address`. If `waitForBridgePayment` times out, the payment goes on: never send again.
-> When an error has `mayHaveLanded: true`, never retry. Read the payment with
-> `fetchBridgePayment({ paymentId: error.paymentId })` first.
+> This is real money. Send a deposit's funds once. After a timeout or an error with
+> `mayHaveLanded: true`, never send again until you have read the payment with
+> `fetchBridgePayment({ paymentId })`.
 
-## Deposit
-
-A deposit pays in a token on another network and lands as USDC at your trading address.
-
-## 1. Pick the asset
-
-`listBridgeAssets({ direction: 'deposit' })` lists the tokens a deposit can be paid in. Each has an
-`assetId`, which you pass to the quote.
+## Pick a token to deposit
 
 <!-- snippet: docs/snippets/deposits-and-withdrawals.ts#deposit-asset -->
 ```ts
@@ -26,14 +14,13 @@ const { items } = await client
   .firstPage();
 const usdc = items.find((a) => a.symbol === 'USDC' && a.chain === 'base');
 if (usdc === undefined) {
-  throw new Error('USDC on Base is not on the deposit list');
+  throw new Error('USDC on Base is not listed');
 }
 ```
 
-## 2. Get a quote
+Whatever you pay in lands as USDC at your trading address.
 
-Quotes are free and move nothing. Amounts are decimal strings in whole units, so `'25'` is 25 USDC.
-`quoteDeposit` returns the ways to deposit, and the first pays out the most.
+## Get a quote
 
 <!-- snippet: docs/snippets/deposits-and-withdrawals.ts#deposit-quote -->
 ```ts
@@ -44,71 +31,55 @@ const [quote] = await client.quoteDeposit({
 if (quote === undefined) {
   throw new Error('No quote');
 }
-console.log(
-  `${quote.input.amount} in, ${quote.output.amount} USDC out, fees ${quote.fees.total} ${quote.fees.currency}, confirm before ${quote.acceptBy}`,
-);
+console.log(`${quote.output.amount} USDC lands, fees ${quote.fees.total}`);
 ```
 
-A quote carries no minimum or maximum. An amount the bridge does not take fails with
-`amount_out_of_range`, and the message names the bounds. A quote is a read, so the SDK retries it
-like one.
+A quote is free and moves nothing. The first one lands the most. An amount the bridge does not take
+fails with `amount_out_of_range`, and the message gives the limits.
 
-## 3. Confirm it
-
-Confirm before `acceptBy`, or ask for a new quote. The payment comes back with `deposit`: a
-one-time address and the exact amount to send.
+## Confirm the deposit
 
 <!-- snippet: docs/snippets/deposits-and-withdrawals.ts#deposit-confirm -->
 ```ts
 const payment = await client.createDeposit({ quote });
-if (payment.status !== 'AWAITING_FUNDS' || payment.deposit === null) {
+const { deposit } = payment;
+if (payment.status !== 'AWAITING_FUNDS' || deposit === null) {
   throw new Error(`${payment.paymentId} is ${payment.status}: send nothing`);
 }
 console.log(
-  `Send ${payment.deposit.amount} of ${payment.deposit.assetId} to ${payment.deposit.address} before ${payment.fundBy}`,
+  `Send ${deposit.amount} to ${deposit.address} on ${deposit.chain} before ${payment.fundBy}`,
 );
 ```
 
-When the bridge wants the owner wallet's signature, `createDeposit` fails with
-`verification_required` and the payment waits: see [Sign for larger payments](#sign-for-larger-payments).
-A payment in `CONFIRM_UNKNOWN` has no `deposit` yet. Read it again with `fetchBridgePayment`
-before you send anything.
+Confirm before the quote's `acceptBy`, or get a new quote. The payment's `deposit` says where to
+send the funds: a one-time address and the amount.
 
-## 4. Send the funds
+## Send the funds
 
-The SDK does not send deposits. From any wallet that holds the funds, send exactly
-`deposit.amount` of the asset on `deposit.chain` to `deposit.address`, once, before
-`payment.fundBy`.
+The SDK does not send deposits. From any wallet, send `deposit.amount` of the token on
+`deposit.chain` to `deposit.address`, once.
 
-## 5. Wait
+Send it before `payment.fundBy`. After that, the payment expires.
 
-A final payment is not always a success, so check `status`.
+## Wait for the deposit
 
 <!-- snippet: docs/snippets/deposits-and-withdrawals.ts#deposit-wait -->
 ```ts
-const done = await client.waitForBridgePayment(
-  { paymentId },
-  { timeout: 30 * 60_000 },
-);
-console.log(`The deposit is ${done.status}: only COMPLETE delivered`);
+const done = await client.waitForBridgePayment({ paymentId });
+console.log(`${paymentId}: ${done.status}`);
 ```
+
+`waitForBridgePayment` waits for the payment to be final, an hour at most by default. Only
+`COMPLETE` means the USDC arrived.
+
+If the wait times out, the payment goes on. Don't send again.
 
 ## Withdraw
 
-A withdrawal sends USDC from your trading address to an address you name on another network. The
-SDK sends the USDC itself, and XO's sponsor pays the gas.
-
-## 1. Get a quote
+Pick the token to receive with `listBridgeAssets({ direction: 'withdraw' })`, then get a quote.
 
 <!-- snippet: docs/snippets/deposits-and-withdrawals.ts#withdraw-quote -->
 ```ts
-const { items } = await client
-  .listBridgeAssets({ direction: 'withdraw' })
-  .firstPage();
-const usdc = items.find((a) => a.symbol === 'USDC' && a.chain === 'base');
-if (usdc === undefined) {
-  throw new Error('USDC on Base is not on the withdraw list');
-}
 const [quote] = await client.quoteWithdrawal({
   assetId: usdc.assetId,
   amount: '25',
@@ -117,102 +88,76 @@ const [quote] = await client.quoteWithdrawal({
 if (quote === undefined) {
   throw new Error('No quote');
 }
-console.log(
-  `${quote.input.amount} USDC out, ${quote.output.amount} to ${quote.recipient}`,
-);
+console.log(`${quote.output.amount} goes to ${quote.recipient}`);
 ```
 
-`quoteWithdrawal` only checks that `recipient` is well formed for the asset's network. A valid
-address that is wrong is final, so show it to whoever approves the withdrawal.
-
-## 2. Withdraw
-
-`withdraw({ quote })` confirms the quote and sends one USDC transfer, at most once. It needs a
-signer that signs raw digests, such as `privateKey` or `signerFrom` with a local account.
+The quote only checks that `recipient` is an address on that network. A wrong address can't be
+undone, so check it before you withdraw.
 
 <!-- snippet: docs/snippets/deposits-and-withdrawals.ts#withdraw-send -->
 ```ts
 const { payment, transaction } = await client.withdraw({ quote });
-console.log(
-  `Payment ${payment.paymentId}: transfer in transaction ${transaction.transactionHash}`,
-);
+console.log(`${payment.paymentId}: sent in ${transaction.transactionHash}`);
 ```
 
-Everything that can be checked is checked before the funding is claimed, the balance included, and
-a failure there sends nothing. Money moves once: calling `withdraw` again for the same quote after
-the claim fails with `bridge_funding_claimed` and sends nothing.
+`withdraw` confirms the quote and sends the USDC from your trading address, once. XO pays the gas by
+default. Your signer must be able to sign a raw digest, as `privateKey` does. Calling it again for
+the same quote fails with `bridge_funding_claimed` and sends nothing. Then wait for the payment as
+for a deposit.
 
-If `transaction.wait()` says `reverted`, the transfer did not fund the payment and the funding
-claim is used. Send the payment's `deposit.amount` to its `deposit.address` yourself, once, before
-`fundBy`, then follow the payment.
+If it throws with `mayHaveLanded: true`, also look the transfer up by its `transactionHash` or
+`nonce`. If `transaction.wait()` says `reverted`, the payment is not funded: send its
+`deposit.amount` to its `deposit.address` yourself, once, before `fundBy`.
 
-## 3. Wait
-
-Follow the payment as for a deposit, with `waitForBridgePayment({ paymentId })`.
-
-## Sign for larger payments
-
-The bridge may ask the owner wallet to sign before a payment goes on, usually from about $300 for a
-wallet new to it. The payment is then `NEEDS_VERIFICATION`.
-
-Pass a `verify` callback to `createDeposit` or `withdraw`. The SDK shows it each item the owner
-wallet is asked to sign, after its own checks and before anything is signed. Only `true` approves;
-anything else, or a throw, signs nothing. The SDK always refuses payloads that could sign in to XO
-or move funds.
+## Sign when the bridge asks
 
 <!-- snippet: docs/snippets/deposits-and-withdrawals.ts#bridge-verify -->
 ```ts
-const verify: VerifyCallback = async (request) => {
-  const { decoded } = request;
-  const what =
-    decoded.kind === 'eip712'
-      ? `typed data ${decoded.typedData.primaryType}, domain ${JSON.stringify(decoded.typedData.domain)}, message ${JSON.stringify(decoded.typedData.message)}`
-      : `message ${JSON.stringify(decoded.message)}`;
-  return approve(`Payment ${request.paymentId} (${request.reason}): ${what}`);
+const verify: VerifyCallback = (request) => {
+  console.log(`${request.paymentId} asks you to sign:`, request.decoded);
+  return approve(request);
 };
+
 const payment = await client.createDeposit({ quote, verify });
 ```
 
-If `createDeposit` failed with `verification_required` (no callback, or it answered no), the
-payment still waits: `verifyBridgePayment({ paymentId: error.paymentId, verify })` finishes it. A
-payment in any other status is returned as it is, so calling it again is safe.
+The bridge may ask your owner wallet to sign before a payment goes on. Pass a `verify` callback to
+`createDeposit` or `withdraw`. Nothing is signed unless it returns `true` for every item. The SDK
+itself refuses anything that could sign in to XO or move funds.
 
-The signer must be the owner EOA: your trading wallet, or the EOA that owns your smart wallet.
+Without a callback, or when it says no, the call fails with `verification_required` and the
+payment waits. Finish it with `verifyBridgePayment({ paymentId: error.paymentId, verify })`.
 
 ## Follow a payment
 
-`fetchBridgePayment` reads a payment, and `waitForBridgePayment` waits until it is final, reading
-it every 10 seconds. It takes a `signal` and a `timeout` for the whole wait (an hour by default),
-and no retries. `listBridgePayments({ direction, status })` lists your payments, newest first.
-
 <!-- snippet: docs/snippets/deposits-and-withdrawals.ts#bridge-follow -->
 ```ts
-try {
-  await client.waitForBridgePayment({ paymentId }, { timeout: 30 * 60_000 });
-} catch (error) {
-  if (!(error instanceof XoError && error.code === 'bridge_wait_timeout')) {
-    throw error;
-  }
-}
 const payment = await client.fetchBridgePayment({ paymentId });
 console.log(`${payment.paymentId}: ${payment.status}`);
 
-const { items } = await client
-  .listBridgePayments({ direction: 'withdraw' })
-  .firstPage();
-console.table(items.map((p) => ({ id: p.paymentId, status: p.status })));
+const { items } = await client.listBridgePayments().firstPage();
+
+for (const p of items) {
+  console.log(`${p.direction} ${p.paymentId}: ${p.status}`);
+}
 ```
+
+`listBridgePayments` lists your deposits and withdrawals, newest first. `COMPLETE`, `EXPIRED` and
+`TAINTED` are final.
 
 | Status | Meaning |
 | --- | --- |
-| `CONFIRM_UNKNOWN` | The confirm's outcome is not known yet. Read it again, and send nothing. |
-| `NEEDS_VERIFICATION` | Waiting for the owner's signature. |
-| `AWAITING_FUNDS` | Confirmed, not funded yet. |
-| `PROCESSING` | The bridge has the funds and is delivering. |
-| `COMPLETE` | Delivered. Final. |
-| `HALTED` | Stopped, but it may still finish. `recoveryUrl` is the bridge's recovery page. |
-| `EXPIRED` | Not funded or verified in time. Final. |
-| `TAINTED` | The bridge will not complete it. Final. Report the `paymentId` to gm@xo.market. |
+| `CONFIRM_UNKNOWN` | The confirm's outcome is unknown. Read it again, and send nothing. |
+| `NEEDS_VERIFICATION` | Waiting for the owner wallet to sign. |
+| `AWAITING_FUNDS` | Waiting for the funds. |
+| `PROCESSING` | The bridge is delivering. |
+| `COMPLETE` | Delivered. |
+| `HALTED` | Stopped, but it may still finish. See `recoveryUrl`. |
+| `EXPIRED` | Not funded in time. |
+| `TAINTED` | The bridge will not complete it. Report the `paymentId` to gm@xo.market. |
 
-Every method is in the [API reference](reference/client/interfaces/SecureClient.md), and every
-error code in [Errors](errors.md).
+## Next steps
+
+- [Set up trading](onchain.md#set-up-the-account)
+- [Read your balances](portfolio.md#read-balances)
+- [Every error code](errors.md)

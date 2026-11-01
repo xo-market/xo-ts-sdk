@@ -4,10 +4,10 @@ import {
   createPublicClient,
   type Market,
   OrderSide,
+  type Page,
   type PublicClient,
 } from '@xomarket/client';
 
-/** The public client: it needs no key. */
 export function publicClient() {
   // #region client
   const client = createPublicClient();
@@ -15,89 +15,40 @@ export function publicClient() {
   return client;
 }
 
-/** High-volume open markets, then the YES price of each. */
 export async function listMarkets(client: PublicClient) {
   // #region list-markets
   const page = await client
-    .listMarkets({ status: 'active', sort: 'volume', pageSize: 10 })
+    .listMarkets({ sort: 'volume', pageSize: 10 })
     .firstPage();
 
   for (const market of page.items) {
-    console.log(
-      `${market.id}: ${market.question} (volume ${market.metrics.volume})`,
-    );
+    console.log(`${market.id}: ${market.question}`);
   }
   // #endregion list-markets
-
-  // #region list-prices
-  const assetIds = page.items.flatMap(
-    (market) => market.outcomes.yes.tokenId ?? [],
-  );
-  const midpoints = await client.fetchMidpoints({ assetIds });
-
-  console.table(
-    page.items.map((market) => ({
-      slug: market.slug,
-      yes: midpoints[market.outcomes.yes.tokenId ?? ''] ?? 'no price',
-    })),
-  );
-  // #endregion list-prices
+  return page;
 }
 
-/** Three pages of the open markets, then the page after them from its cursor. */
 export async function walkPages(client: PublicClient) {
   // #region pagination
-  const markets = client.listMarkets({ status: 'active', pageSize: 5 });
-
-  let pageCount = 0;
-  let cursor: string | undefined;
-
-  for await (const page of markets) {
-    pageCount += 1;
-    console.log(`Page ${pageCount}`);
+  for await (const page of client.listMarkets({ pageSize: 50 })) {
     for (const market of page.items) {
-      console.log(`  ${market.id}: ${market.question}`);
-    }
-    cursor = page.nextCursor;
-    if (pageCount === 3) {
-      break;
+      console.log(market.question);
     }
   }
   // #endregion pagination
-
-  // #region pagination-cursor
-  const next = await markets.from(cursor).firstPage();
-  console.log(
-    `Page 4 has ${next.items.length} market(s); more after it: ${next.hasMore}`,
-  );
-  // #endregion pagination-cursor
 }
 
-/** One market, read by its slug, by its link and by its id, then its main fields. */
-export async function readMarket(client: PublicClient, listed: Market) {
+export async function readMarket(client: PublicClient, slug: string) {
   // #region fetch-market
-  const bySlug = await client.fetchMarket({ slug: listed.slug });
-  const byUrl = await client.fetchMarket({
-    url: `https://xo.market/markets/${listed.slug}`,
-  });
-  const byId = await client.fetchMarket({ id: listed.id });
-  // #endregion fetch-market
+  const market = await client.fetchMarket({ slug });
 
-  // #region market-fields
-  console.table({
-    conditionId: byId.conditionId,
-    yesToken: byId.outcomes.yes.tokenId,
-    noToken: byId.outcomes.no.tokenId,
-    yesPrice: byId.outcomes.yes.price,
-    tickSize: byId.trading.minimumTickSize,
-    minimumOrderSize: byId.trading.minimumOrderSize,
-    endDate: byId.state.endDate,
-  });
-  // #endregion market-fields
-  return [bySlug, byUrl, byId];
+  console.log(market.question);
+  console.log('YES token:', market.outcomes.yes.tokenId);
+  console.log('Tick size:', market.trading.minimumTickSize);
+  // #endregion fetch-market
+  return market;
 }
 
-/** Says whether a market takes orders now, and why not. */
 export async function checkTradable(client: PublicClient, conditionId: string) {
   // #region tradability
   const { ok, reasons } = await client.fetchMarketTradability({ conditionId });
@@ -106,56 +57,45 @@ export async function checkTradable(client: PublicClient, conditionId: string) {
   return ok;
 }
 
-/** The prices of a market's YES token: book, best buy price, midpoint, spread and last trade. */
-export async function readPrices(
-  client: PublicClient,
-  market: Market,
-  assetId: string,
-) {
+export async function readPrices(client: PublicClient, assetId: string) {
   // #region prices
-  const [orderBook, buyPrice, midpoint, spread, lastTrade] = await Promise.all([
-    client.fetchOrderBook({ assetId }),
-    client.fetchPrice({ assetId, side: OrderSide.BUY }),
+  const [midpoint, bestBid, spread, lastTrade] = await Promise.all([
     client.fetchMidpoint({ assetId }),
+    client.fetchPrice({ assetId, side: OrderSide.BUY }),
     client.fetchSpread({ assetId }),
     client.fetchLastTradePrice({ assetId }),
   ]);
 
-  console.table({
-    market: market.question,
-    assetId,
-    bids: orderBook.bids.length,
-    asks: orderBook.asks.length,
-    buyPrice: buyPrice ?? 'none',
-    midpoint: midpoint ?? 'none',
-    spread: spread ?? 'none',
-    lastTradePrice: lastTrade?.price ?? 'none',
-    lastTradeSide: lastTrade?.side ?? 'none',
-  });
+  console.log({ midpoint, bestBid, spread, lastTrade: lastTrade?.price });
   // #endregion prices
 }
 
-/** The order book of a market's YES token: its five best bids and asks. */
-export async function readBook(
-  client: PublicClient,
-  market: Market,
-  assetId: string,
-) {
+export async function priceMany(client: PublicClient, page: Page<Market>) {
+  // #region list-prices
+  const assetIds = page.items.flatMap(
+    (market) => market.outcomes.yes.tokenId ?? [],
+  );
+  const midpoints = await client.fetchMidpoints({ assetIds });
+
+  for (const assetId of assetIds) {
+    console.log(assetId, midpoints[assetId] ?? 'no price');
+  }
+  // #endregion list-prices
+}
+
+export async function readBook(client: PublicClient, assetId: string) {
   // #region book
   const book = await client.fetchOrderBook({ assetId });
 
-  console.log(`${market.question}: tick ${book.minimumTickSize}`);
-  console.log('Best bids, best first');
-  console.table(book.bids.slice(-5).reverse());
-  console.log('Best asks, best first');
-  console.table(book.asks.slice(-5).reverse());
+  console.log('Best bid:', book.bids.at(-1));
+  console.log('Best ask:', book.asks.at(-1));
   // #endregion book
 }
 
-/** Reads an event with its markets, each under its label in the event. */
 export async function readEvent(client: PublicClient, slug: string) {
   // #region event-markets
   const event = await client.fetchEvent({ slug });
+
   for (const market of event.markets ?? []) {
     console.log(`${market.groupItemTitle ?? market.slug}: ${market.question}`);
   }
@@ -163,23 +103,17 @@ export async function readEvent(client: PublicClient, slug: string) {
   return event;
 }
 
-/** The markets that pay Liquidity Rewards in USDC, and what an order must do to earn. */
 export async function rewardsMarkets(client: PublicClient) {
   // #region rewards-markets
   const { items } = await client.listRewardPools().firstPage();
 
-  const rows = items.flatMap((pool) =>
-    pool.programmes
-      .filter((programme) => programme.currency === 'USDC' && programme.active)
-      .map((programme) => ({
-        market: pool.market?.slug ?? pool.conditionId,
-        usdcPerDay: programme.dailyPool ?? 'n/a',
-        minShares: programme.terms.minOrderSize ?? 'n/a',
-        maxCentsFromMid: programme.terms.maxDistanceCents ?? 'n/a',
-        ends: programme.endsAt ?? 'n/a',
-      })),
-  );
-
-  console.table(rows);
+  for (const pool of items) {
+    for (const programme of pool.programmes) {
+      console.log(
+        pool.market?.slug ?? pool.conditionId,
+        `${programme.dailyPool} ${programme.currency} a day`,
+      );
+    }
+  }
   // #endregion rewards-markets
 }

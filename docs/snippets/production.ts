@@ -1,4 +1,4 @@
-// Code that docs/production.md quotes: type-checked, never run.
+// Code that docs/production.md and SDK_DIRECTION.md quote: type-checked, never run.
 
 import {
   createPublicClient,
@@ -8,44 +8,28 @@ import {
 } from '@xomarket/client';
 import { fileStore } from '@xomarket/client/node';
 import { privateKey } from '@xomarket/client/viem';
-import { describeError as describe } from './errors';
 
-/** A client for a server that runs on its own. */
 export async function productionClient(key: string) {
   // #region production-client
   const client = await createSecureClient({
     signer: privateKey(key),
     store: fileStore('/var/lib/my-bot/xo'),
     label: 'my-bot',
-    shutdownHooks: false,
   });
   // #endregion production-client
   return client;
 }
 
-/** Cancels every open order, then closes the client: how a bot stops. */
-export async function shutDown(
-  client: SecureClient,
-  log: (line: string) => void,
-) {
-  let code = 0;
+export async function shutDown(client: SecureClient) {
   // #region stop-cancel
   try {
-    const cancelled = await client.cancelAll().catch((error: unknown) => {
-      log(`cancelAll failed: ${describe(error)}. Sending it once more`);
-      return client.cancelAll();
-    });
-    log(`cancelAll canceled ${cancelled.canceled.length} order(s)`);
-  } catch (error) {
-    log(`cancelAll FAILED: ${describe(error)}. Check your open orders!`);
-    code = 1;
+    await client.cancelAll();
+  } finally {
+    await client.close();
   }
-  await client.close();
   // #endregion stop-cancel
-  return code;
 }
 
-/** Starts the order heartbeat, the account-wide dead-man switch. */
 export function startHeartbeat(client: SecureClient) {
   // #region heartbeat
   const heartbeat = client.startOrderHeartbeat({
@@ -55,7 +39,6 @@ export function startHeartbeat(client: SecureClient) {
   return heartbeat;
 }
 
-/** A read with a timeout of its own, no retries, and a signal that cancels it. */
 export async function quickRead(
   client: PublicClient,
   assetId: string,
@@ -70,7 +53,6 @@ export async function quickRead(
   return book;
 }
 
-/** Warns when a service says no requests are left in the window. */
 export function rateLimitClient() {
   // #region rate-limit
   const client = createPublicClient({

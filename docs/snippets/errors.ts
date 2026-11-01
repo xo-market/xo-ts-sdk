@@ -1,19 +1,24 @@
-// Code that docs/errors.md and docs/sdk-direction.md quote: type-checked, never run.
+// Code that docs/errors.md and SDK_DIRECTION.md quote: type-checked, never run.
 
-import { FetchMarketError, type PublicClient, XoError } from '@xomarket/client';
+import {
+  FetchMarketError,
+  type PublicClient,
+  RequestRejectedError,
+} from '@xomarket/client';
 
-// #region describe-error
-function describeError(error: unknown): string {
-  return error instanceof XoError
-    ? `${error.name} ${error.code}${error.mayHaveLanded === undefined ? '' : ` mayHaveLanded=${error.mayHaveLanded}`}: ${error.message}`
-    : String(error);
+export async function marketOrNull(client: PublicClient, slug: string) {
+  // #region tell-apart
+  try {
+    return await client.fetchMarket({ slug });
+  } catch (error) {
+    if (error instanceof RequestRejectedError && error.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+  // #endregion tell-apart
 }
 
-// #endregion describe-error
-
-export { describeError };
-
-/** Reads a market, and names what went wrong when it cannot. */
 export async function marketOrExplain(client: PublicClient, slug: string) {
   // #region error-guard
   try {

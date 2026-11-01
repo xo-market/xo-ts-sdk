@@ -8,7 +8,6 @@ import {
 import { privateKey } from '@xomarket/client/viem';
 import { requireEnv } from '../../examples/scripts/src/lib/env';
 
-/** A signed-in client, with the key from the environment. */
 export async function secureClient() {
   // #region client
   const client = await createSecureClient({
@@ -18,32 +17,18 @@ export async function secureClient() {
   return client;
 }
 
-/** The positions of any wallet, by its address. */
 export async function listPositions(client: PublicClient, wallet: string) {
   // #region list-positions
-  const rows = [];
-
   for await (const page of client.listPositions({ user: wallet })) {
-    rows.push(
-      ...page.items.map((position) => ({
-        market: position.title,
-        outcome: position.outcome ?? '',
-        size: position.currentSize,
-        value: position.currentValue,
-        avgPrice: position.avgPrice ?? '',
-        price: position.currentPrice ?? '',
-        pnl: position.unrealizedPnl,
-        redeemable: position.redeemable,
-      })),
-    );
+    for (const position of page.items) {
+      console.log(
+        `${position.title}: ${position.currentSize} shares worth ${position.currentValue}`,
+      );
+    }
   }
-
-  console.log(`${rows.length} position(s) of ${wallet}`);
-  console.table(rows);
   // #endregion list-positions
 }
 
-/** The account at a glance: balances, portfolio value, PnL and latest activity. */
 export async function dashboard(client: SecureClient) {
   // #region balances
   const balances = await client.fetchBalances();
@@ -53,18 +38,19 @@ export async function dashboard(client: SecureClient) {
 
   // #region portfolio
   const value = await client.fetchPortfolioValue();
-  console.table(value);
+  console.log(`Worth ${value.value} in all, ${value.cash} in cash`);
   // #endregion portfolio
 
   // #region pnl
   const pnl = await client.fetchUserPnl();
-  console.log(
-    `PnL ${pnl.pnl} (${pnl.percentPnl} %), ${pnl.openPositions} open`,
-  );
+  console.log(`PnL ${pnl.pnl} (${pnl.percentPnl}%)`);
   // #endregion pnl
 
   // #region activity
-  const activity = await client.listActivity({ pageSize: 5 }).firstPage();
-  console.table(activity.items, ['timestamp', 'type', 'title', 'amount']);
+  const { items } = await client.listActivity({ pageSize: 5 }).firstPage();
+
+  for (const row of items) {
+    console.log(row.timestamp, row.type, row.title, row.amount);
+  }
   // #endregion activity
 }

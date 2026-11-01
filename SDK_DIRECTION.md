@@ -80,13 +80,13 @@ try {
 }
 ```
 
-Every error has a stable `code`, and [Errors](errors.md) lists them all.
+Every error has a stable `code`, and [Errors](docs/errors.md) lists them all.
 
 ## Documented in the code
 
 Every public method has a comment that says what it does for you without naming a backend service.
 It lists the errors it throws with `@throws`, and has one `@example` that needs no imports. The
-[API reference](reference/README.md) is generated from those comments, and the code blocks of
+[API reference](docs/reference/README.md) is generated from those comments, and the code blocks of
 these pages are copied from code that is compiled, so a page cannot drift from the code.
 
 ## One network
@@ -98,5 +98,5 @@ deployment, such as a local one.
 ## Changes between versions
 
 The SDK follows [semantic versioning](https://semver.org). Below 1.0.0, a minor version can change
-the API, and the [changelog](changelog.md) says what changed in each version. We aim to avoid
+the API, and the [changelog](docs/changelog.md) says what changed in each version. We aim to avoid
 breaking changes, and to give a way out first when we cannot.

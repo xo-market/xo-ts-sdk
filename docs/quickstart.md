@@ -1,12 +1,11 @@
 # Quickstart
 
-Each step runs one script from the SDK's [examples](../examples/scripts/README.md).
-
 > [!WARNING]
-> The SDK trades on XO mainnet, so the money is real. Use a new key that holds only what you can
-> afford to lose.
+> XO runs on mainnet, so the money is real. Use a new wallet that holds only what you can afford
+> to lose.
 
-You need Node 22 or later, a private key for a new wallet, and about 5 USDC on Base.
+You need Node 22 or later, the private key of that wallet, and about 5 USDC on Base. Each step
+runs one script from the SDK's [examples](../examples/scripts/README.md).
 
 ## 1. Set up a project
 
@@ -18,17 +17,13 @@ npm install @xomarket/client viem
 npm install -D tsx typescript @types/node
 ```
 
-Copy the scripts used below from the examples' [`src`](../examples/scripts/src/) folder, with its
-`lib` folder, and the repository's [`.env.example`](../.env.example). Then add your key to a
-`.env` in the folder you run the scripts from:
+Copy the scripts below and their `lib` folder from the examples' [`src`](../examples/scripts/src/)
+folder. Then copy the repository's [`.env.example`](../.env.example) and add your key:
 
 <!-- snippet: none -->
 ```sh
 cp .env.example .env   # then set XO_PK=0x... in .env
 ```
-
-The `.env` of the folder you run from wins. `lib/env.ts` also reads a `.env` two folders up (in a
-clone of the SDK, the repository's), but only for the settings that yours leaves unset.
 
 ## 2. List markets
 
@@ -52,7 +47,7 @@ for (const market of page.items) {
 }
 ```
 
-It prints five open markets, each with its id. An example of what it prints:
+It prints five open markets:
 
 <!-- snippet: none -->
 ```console Example
@@ -81,38 +76,24 @@ console.log(`${client.wallet}: ${balances.collateral} USDC to trade with`);
 console.table(balances.positions);
 ```
 
-An example of what it prints for a new wallet, with a shortened address:
-
-<!-- snippet: none -->
-```console Example
-0xA11c…e5B7: 0 USDC to trade with
-┌─────────┐
-│ (index) │
-├─────────┤
-└─────────┘
-```
-
-There is no sign-in call. `createSecureClient` signs in when it creates the client, and creates
-your XO account the first time. The address it trades from is `client.wallet`: your wallet's own.
-The script ends by itself. The client revokes its 1-day API key when the process ends normally,
-or on Ctrl-C or SIGTERM. If a script is cut short by `process.exit()` or a crash, the key is not
-revoked and expires within a day.
+`createSecureClient` signs in for you, and creates your XO account the first time.
+`client.wallet` is the address you trade from.
 
 ## 4. Deposit USDC
 
-Run `npx tsx deposit.ts`. It gets a quote from XO's bridge, prints an address and an amount, and
-waits. Send exactly that amount of USDC on Base to that address, once. The script finishes when
-the payment is final, and prints its status: only `COMPLETE` means the USDC arrived.
+Run `npx tsx deposit.ts`. It prints an address and an amount, then waits. Send that amount of
+USDC on Base to that address, once. The script ends when the payment is final. Only `COMPLETE`
+means your USDC arrived.
 
-If the script stops after you sent the funds, don't send again: the payment goes on, and
-[Deposits and withdrawals](deposits-and-withdrawals.md) shows how to follow it. If it stops before
-you sent anything, send nothing: the payment expires at its `fundBy` time (status `EXPIRED`), and
-a new run gets a new quote.
+If the script stops after you sent the funds, don't send again. The payment carries on, and
+[Deposits and withdrawals](deposits-and-withdrawals.md) shows how to follow it by its
+`paymentId`. If you sent nothing, send nothing: the payment expires, and a new run gets a new
+quote.
 
 ## 5. Set up trading
 
-Run `npx tsx account-setup.ts`. It lets the exchange move your USDC and shares, in one
-transaction. XO pays the gas.
+Run `npx tsx account-setup.ts`. In one transaction, it lets the exchange move your USDC and
+shares. XO pays the gas.
 
 <!-- snippet: docs/snippets/onchain.ts#setup -->
 ```ts
@@ -129,20 +110,12 @@ console.log(
 );
 ```
 
-Example output, with a shortened hash:
-
-<!-- snippet: none -->
-```console Example
-Approvals missing: setting them up
-Set up in transaction 0x4e3a…c21d
-```
-
-It sends nothing when the account is already set up, so it is safe to run on every start.
+When the account is set up already, it sends nothing, so you can run it on every start.
 
 ## 6. Place and cancel an order
 
-Run `npx tsx place-and-cancel.ts`. It picks a high-volume open market that takes orders, bids for
-1 YES share at the lowest price so the order rests on the book, then cancels it.
+Run `npx tsx place-and-cancel.ts`. It picks a busy market that takes orders, bids for 1 YES
+share at the lowest price so the order rests on the book, then cancels it.
 
 <!-- snippet: docs/snippets/orders.ts#place -->
 ```ts
@@ -168,7 +141,7 @@ if (placed.ok) {
 }
 ```
 
-Example output, with a shortened order id:
+It prints something like this:
 
 <!-- snippet: none -->
 ```console Example
@@ -176,22 +149,22 @@ BUY 1 YES @ 0.001 is live: 0x7b1f…e09a
 Canceled 1 order(s)
 ```
 
-`postOnly: true` means the order can only rest on the book. XO refuses it, with the code
-`post_only_would_cross`, if it would trade right away. A refusal is a value (`placed.ok` is
-`false`), not an exception.
+With `postOnly: true`, XO refuses an order that would trade right away. A refused order has
+`placed.ok` set to `false`, and nothing was placed. If the call throws with `mayHaveLanded: true`,
+the order may be on the book: look it up with `reconcileOrder` before you place it again.
 
 ## Common issues
 
 | You see | What to do |
 | --- | --- |
-| `Set XO_PK (see .env.example)` | Put your private key in `.env` as `XO_PK=0x...`. |
-| `0 USDC to trade with` after a deposit | Wait a few seconds after `deposit.ts` says `COMPLETE`, then run `dashboard.ts` again. |
-| `Refused (market_not_active)` | The market stopped taking orders after the script picked it. Run the script again: it picks a market that takes orders. |
-| `Refused (...)` | XO refused the order and says why. Check that step 3 shows USDC to trade with. |
+| `Set XO_PK (see .env.example)` | Put your key in `.env` as `XO_PK=0x...`. |
+| `0 USDC to trade with` after a deposit | Wait a few seconds after `COMPLETE`, then run `dashboard.ts` again. |
+| `Refused (market_not_active)` | The market stopped taking orders after the script picked it. Run it again. |
+| `Refused (...)` | XO says why. Check that step 3 shows USDC to trade with. |
 | `api_key_limit_reached` | Your account has 10 active API keys. See the [Production checklist](production.md). |
-| `deposit.ts` stopped before `COMPLETE` | If you already sent the funds, don't send again: the payment goes on, and `dashboard.ts` shows the USDC once it arrives. If you had not sent anything, send nothing and run it again for a new quote. |
 
 ## Next steps
 
-- [Orders](orders.md): order types, market orders and listing your orders.
-- [Markets and prices](markets.md): show markets and live prices in your app.
+- [Place other kinds of orders](orders.md)
+- [Show markets and prices in your app](markets.md)
+- [Follow a deposit, or withdraw](deposits-and-withdrawals.md)

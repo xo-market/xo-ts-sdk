@@ -1,32 +1,24 @@
 // Code that docs/authentication.md quotes: type-checked, never run.
 
-import {
-  createSecureClient,
-  type SecureClient,
-  type WalletCredentials,
-} from '@xomarket/client';
+import { createSecureClient, type SecureClient } from '@xomarket/client';
 import { fileStore } from '@xomarket/client/node';
 import { privateKey, signerFrom } from '@xomarket/client/viem';
 import type { LocalAccount } from 'viem';
 
-/** What the client holds: its wallet, and its credentials, which are secrets. */
-export async function credentialsTour(client: SecureClient) {
-  // #region credentials
+/** A client that signs in with a private key. */
+export async function signIn(key: string) {
+  // #region sign-in
+  const client = await createSecureClient({ signer: privateKey(key) });
   console.log(`Trading as ${client.wallet}`);
-  console.log(JSON.stringify(client));
-  const credentials = await client.exportCredentials();
-  // #endregion credentials
-  return credentials;
+  // #endregion sign-in
+  return client;
 }
 
-/** A client that uses credentials saved by an earlier one, instead of signing in for new ones. */
-export async function savedCredentials(key: string, saved: WalletCredentials) {
-  // #region saved-credentials
-  const client = await createSecureClient({
-    signer: privateKey(key),
-    credentials: saved,
-  });
-  // #endregion saved-credentials
+/** A client whose signer is a viem account: a local one, or one of a key management service. */
+export async function accountClient(account: LocalAccount) {
+  // #region signer-from-account
+  const client = await createSecureClient({ signer: signerFrom(account) });
+  // #endregion signer-from-account
   return client;
 }
 
@@ -41,24 +33,17 @@ export async function fileStoreClient(key: string) {
   return client;
 }
 
-/** A client whose signer is a viem account: a local one, or one of a key management service. */
-export async function accountClient(account: LocalAccount) {
-  // #region signer-from-account
-  const client = await createSecureClient({ signer: signerFrom(account) });
-  // #endregion signer-from-account
-  return client;
-}
+/** A second client that uses the first one's credentials instead of signing in. */
+export async function savedCredentials(client: SecureClient, key: string) {
+  // #region saved-credentials
+  const saved = await client.exportCredentials();
 
-/** Lists the account's API keys, then replaces the one the client holds. */
-export async function rotateKey(client: SecureClient) {
-  // #region rotate-key
-  for await (const page of client.listApiKeys()) {
-    for (const key of page.items) {
-      console.log(`${key.name} ${key.prefix}… expires ${key.expiresAt}`);
-    }
-  }
-  await client.rotateCredentials();
-  // #endregion rotate-key
+  const again = await createSecureClient({
+    signer: privateKey(key),
+    credentials: saved,
+  });
+  // #endregion saved-credentials
+  return again;
 }
 
 /** Ends this process's use of the client: the credentials stay valid. */
@@ -75,4 +60,16 @@ export async function signOut(client: SecureClient) {
   const { items } = await publicClient.listMarkets().firstPage();
   // #endregion end-authentication
   return items;
+}
+
+/** Lists the account's API keys, then replaces the one the client holds. */
+export async function rotateKey(client: SecureClient) {
+  // #region rotate-key
+  for await (const page of client.listApiKeys()) {
+    for (const key of page.items) {
+      console.log(key.name, key.expiresAt);
+    }
+  }
+  await client.rotateCredentials();
+  // #endregion rotate-key
 }

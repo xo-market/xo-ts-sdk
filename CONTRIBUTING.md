@@ -61,7 +61,8 @@ node scripts/bun-smoke.ts
 ```
 
 The [README](README.md) explains every command, and [AGENTS.md](AGENTS.md) has the conventions
-for the API, the examples and the docs.
+for the API, the examples and the docs. [SDK_DIRECTION.md](SDK_DIRECTION.md) explains how the API
+is named and shaped, and why.
 
 A change that users can see (a new method, a changed behavior, a fix) needs a changeset, which
 becomes its entry in the changelog:

@@ -1,45 +1,27 @@
 # Portfolio and activity
 
-Any wallet's positions are public. Your own balances, value, profit and loss and activity need a
-client that has signed in with your wallet.
-
 ## Read any wallet's positions
-
-`listPositions({ user })` needs no key. Pass the wallet's address. A wallet with a private profile
-lists none.
 
 <!-- snippet: docs/snippets/portfolio.ts#list-positions -->
 ```ts
-const rows = [];
-
 for await (const page of client.listPositions({ user: wallet })) {
-  rows.push(
-    ...page.items.map((position) => ({
-      market: position.title,
-      outcome: position.outcome ?? '',
-      size: position.currentSize,
-      value: position.currentValue,
-      avgPrice: position.avgPrice ?? '',
-      price: position.currentPrice ?? '',
-      pnl: position.unrealizedPnl,
-      redeemable: position.redeemable,
-    })),
-  );
+  for (const position of page.items) {
+    console.log(
+      `${position.title}: ${position.currentSize} shares worth ${position.currentValue}`,
+    );
+  }
 }
-
-console.log(`${rows.length} position(s) of ${wallet}`);
-console.table(rows);
 ```
 
-`redeemable: true` lists only the positions you can redeem now, and `market` (a condition id)
-lists the positions of one market. Both filters are applied to each page that XO sends, so a page
-can hold fewer positions than XO sent, even none, and still have more after it. Keep reading until
-`hasMore` is `false`.
+Positions are public, so a client with no key can read them by wallet address. A wallet with a
+private profile lists none.
 
-## Create a client for your own account
+Pass `redeemable: true` to list only what you can redeem now, or `market` (a condition id) for one
+market. For every field, see [`Position`](reference/client/type-aliases/Position.md).
 
-Reading your own account takes a secure client. There is no read-only client for it: the wallet's
-data is tied to its key. The client only signs in, and nothing in the example below trades.
+## Create a client for your account
+
+Your balances, value, profit and loss and activity need a client signed in with your wallet.
 
 <!-- snippet: docs/snippets/portfolio.ts#client -->
 ```ts
@@ -48,14 +30,12 @@ const client = await createSecureClient({
 });
 ```
 
-> [!WARNING]
-> A secure client can trade and move funds. Run it on your server, with a wallet that holds only
-> what the account needs, and never put the key in a web page, a repository or a log.
+Nothing on this page trades, but a secure client can trade and move funds. Keep it, and its key,
+on your server.
 
-On a secure client, `listPositions()` without a `user` lists your own wallet's positions, and the
-same method with a `user` reads any other wallet.
+On this client, `listPositions()` with no `user` lists your own positions.
 
-## Read balances and value
+## Read balances
 
 <!-- snippet: docs/snippets/portfolio.ts#balances -->
 ```ts
@@ -64,52 +44,47 @@ console.log(`${client.wallet}: ${balances.collateral} USDC to trade with`);
 console.table(balances.positions);
 ```
 
+`collateral` is the USDC the order book holds for you, which is what you can trade with.
+`positions` lists your shares of each outcome token. Amounts are decimal strings.
+
+## Read your portfolio value
+
 <!-- snippet: docs/snippets/portfolio.ts#portfolio -->
 ```ts
 const value = await client.fetchPortfolioValue();
-console.table(value);
+console.log(`Worth ${value.value} in all, ${value.cash} in cash`);
 ```
 
-Amounts are decimal strings in dollars. Two of them look alike and are not the same:
-
-| Field | What it is |
-| --- | --- |
-| `Balances.collateral` | The cash credit the order book holds for the account. This is what trading can use. |
-| `PortfolioValue.cash` | The spendable USDC in the wallet, as the portfolio value reports it. |
-
-They can differ, for example right after a deposit or before a withdrawal. `PortfolioValue.value`
-is `cash + positionsValue + claimableAmount`.
+`value` adds up `cash`, what your positions are worth and the winnings you have not redeemed yet.
+`cash` and `collateral` can differ, for example right after a deposit.
 
 ## Read profit and loss
 
 <!-- snippet: docs/snippets/portfolio.ts#pnl -->
 ```ts
 const pnl = await client.fetchUserPnl();
-console.log(
-  `PnL ${pnl.pnl} (${pnl.percentPnl} %), ${pnl.openPositions} open`,
-);
+console.log(`PnL ${pnl.pnl} (${pnl.percentPnl}%)`);
 ```
 
-`fetchUserPnl()` reads the whole account. `fetchUserPnl({ marketId })` reads one market, and
-`fetchUserPnl({ positionId })` one position, with the ids a `Position` gives.
+That is the whole account. Pass a `marketId` for one market, or a `positionId` for one position.
 
 ## Read activity
 
 <!-- snippet: docs/snippets/portfolio.ts#activity -->
 ```ts
-const activity = await client.listActivity({ pageSize: 5 }).firstPage();
-console.table(activity.items, ['timestamp', 'type', 'title', 'amount']);
+const { items } = await client.listActivity({ pageSize: 5 }).firstPage();
+
+for (const row of items) {
+  console.log(row.timestamp, row.type, row.title, row.amount);
+}
 ```
 
-`type` narrows the list to `TRADE`, `REDEEM`, `SPLIT`, `MERGE`, `TRANSFER_IN`, `TRANSFER_OUT`,
-`REFUND` or `CREATOR_UNLOCK`, and `marketId` to one market. The whole dashboard runs as
-[`dashboard.ts`](../examples/scripts/src/dashboard.ts).
+Activity is newest first. Filter it by `type`, such as `TRADE` or `REDEEM`, or by `marketId`.
+The example [`dashboard.ts`](../examples/scripts/src/dashboard.ts) reads your balances, value,
+profit and loss and activity in one script.
 
-## Stream the positions
+## Next steps
 
-The `portfolio` topic sends all your positions on subscribe and after every change: see
-[Live data](realtime.md#stream-your-positions).
-
-> [!WARNING]
-> Never turn on `socket.io-client` debug logging (`DEBUG=socket.io-client:*`) with a real key. It
-> prints the handshake, and the handshake carries the key.
+- [Stream your positions](realtime.md#stream-your-positions)
+- [Redeem resolved markets](onchain.md#redeem-resolved-markets)
+- [Move USDC in and out](deposits-and-withdrawals.md)
