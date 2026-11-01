@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  pull_request:
+    # `edited` is a change of the title, the description or the base branch: the public-content
+    # check below reads the title and the description, so an edit has to run it again.
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The whole history: the commit-message check below reads the commits between the base
+          # branch and HEAD, so `origin/<base branch>` has to exist.
+          fetch-depth: 0
+
+      # pnpm version is read from "packageManager" in the root package.json.
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      # The public-content check (scripts/public-check.ts) over every tracked file and file name:
+      # nothing internal may be in this repository. It prints each finding with the match hidden
+      # (`***`), never the match itself.
+      - run: pnpm -C scripts public-check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm -C packages/client test
+      - run: pnpm -C packages/client build
+      - run: pnpm -C packages/client check:package
+      # The public-content check of the npm tarball, the files that people install. It is packed
+      # into a directory of its own, so the glob matches exactly one file (a second tarball, or
+      # none, fails the step).
+      - name: Check the npm tarball for internal content
+        run: |
+          set -euo pipefail
+          pnpm -C packages/client pack --pack-destination "$RUNNER_TEMP/tarball"
+          shopt -s nullglob
+          tarballs=("$RUNNER_TEMP"/tarball/*.tgz)
+          if [ "${#tarballs[@]}" -ne 1 ]; then
+            echo "::error title=Tarball::Expected exactly one packed tarball, found ${#tarballs[@]}."
+            exit 1
+          fi
+          pnpm -C scripts public-check --tarball "${tarballs[0]}"
+      # The runtime smoke test of the built package (see the Bun job below), on Node.
+      - run: node scripts/bun-smoke.ts
+      # The examples, the docs-only code that the docs quote (docs/snippets/) and the tooling
+      # type-check against the built package (its exports and dist types), so these run after
+      # the build.
+      - run: pnpm --filter "./examples/*" typecheck
+      - run: pnpm run docs:typecheck
+      - run: pnpm -C scripts typecheck
+      - run: pnpm -C scripts test
+      # The docs, verified without writing anything: the committed docs/reference/ is what typedoc
+      # generates (with no warning), every code block equals its region in docs/snippets/ or a test,
+      # docs/errors.md has exactly the error codes of packages/client/src, no page of the site (nor
+      # the npm and examples READMEs) uses wording that is not for the public docs or links to an
+      # out-of-date page of the site, the generated reference is as clean, the TypeScript SDK tab
+      # of docs.xo.market builds from docs/ (every page is in docs/site.json, converts, compiles
+      # as MDX, links to pages that exist, stays under 300 KB), and no internal link is dead.
+      # `pnpm run docs:build` refreshes docs/reference/.
+      - run: pnpm run docs:check
+
+      # Pull requests only: the commit messages the pull request adds to its base branch, and the
+      # pull request's own title and description (a squash merge writes them into the history).
+      # The values go through `env`, never into the script text: a title or a description is
+      # text that anybody can write, and an expression inside `run` would paste it into the shell
+      # script before the shell reads it. Here the script is fixed and the shell only expands
+      # quoted variables. A pull request without a description is fine: the variable is empty,
+      # and an empty text is clean.
+      - name: Check the pull request's commits, title and description
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: pnpm -C scripts public-check --commits "origin/$BASE_REF..HEAD" --env PR_TITLE --env PR_BODY
+
+  bun:
+    # Bun is a supported runtime: this runs the BUILT package on it (scripts/bun-smoke.ts). The
+    # ESM and CommonJS builds of the four entries load; an order is signed (golden digest, and
+    # a fresh key that recovers); every HMAC vector matches; one request goes through a fake
+    # fetch; a book subscription opens and closes against a local Bun.serve WebSocket; and the
+    # process exits promptly afterwards, so no timer or socket of the SDK keeps Bun alive.
+    # pnpm installs and tsdown builds on Node; only the smoke runs on Bun. The Bun version is
+    # pinned exactly.
+    name: Bun
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -C packages/client build
+      - run: bun --version
+      - run: bun scripts/bun-smoke.ts
