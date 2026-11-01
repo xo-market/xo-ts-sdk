@@ -1,7 +1,5 @@
 # Markets and prices
 
-Read markets, prices and order books. None of this needs a key.
-
 ## Create a client
 
 <!-- snippet: docs/snippets/markets.ts#client -->
