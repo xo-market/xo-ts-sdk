@@ -52,11 +52,15 @@ export type { BrowseItem } from '../models/browse';
 // market can be traded. Only CLOB markets with two outcomes are modelled; a list leaves the
 // others out.
 
-/** The statuses `status` filters by, and the status of XO each is. */
+/**
+ * The statuses `status` filters by, and the statuses of XO each covers. XO's `ACTIVE` filter
+ * holds open markets that are not past their end time, and `EXPIRED` the ones that are, until
+ * the outcome is set. A decided market is `RESOLVED`, then `CLOSED` for good.
+ */
 const STATUS_FILTER = {
-  active: 'ACTIVE',
-  closed: 'CLOSED',
-  resolved: 'RESOLVED',
+  active: ['ACTIVE'],
+  closed: ['EXPIRED'],
+  resolved: ['RESOLVED', 'CLOSED'],
 } as const;
 
 /** What `sort` orders a list of markets by, and the key of the market list each is. */
@@ -93,9 +97,10 @@ const directionOf = (order: 'asc' | 'desc' | undefined): 'ASC' | 'DESC' =>
 export type ListMarketsRequest = {
   /**
    * Only markets in this stage of their life: `active` (open for trading and not past their
-   * end time), `closed` (trading has ended and the outcome is not decided yet) or `resolved`
+   * end time), `closed` (past their end time, with the outcome not decided yet) or `resolved`
    * (the outcome is decided). Defaults to `active`: a list without a `status` holds open
-   * markets only.
+   * markets only. A `closed` market's own status still reads `ACTIVE` until its outcome is
+   * set, so its `state.closed` is `false`.
    */
   status?: 'active' | 'closed' | 'resolved';
   /** Only the markets of this event, its sub-events included. An event's id, a UUID. */
@@ -193,7 +198,7 @@ export function listMarkets(
   );
   const call = parseRequestOptions(options);
   // Open markets unless the caller asks for another stage.
-  const statuses = { statuses: [STATUS_FILTER[input.status ?? 'active']] };
+  const statuses = { statuses: [...STATUS_FILTER[input.status ?? 'active']] };
   const direction =
     input.sort === undefined && input.order === undefined
       ? {}
@@ -623,7 +628,7 @@ export function listBrowseItems(
       ? {}
       : { sortOrder: directionOf(input.order) }),
     // Open markets unless the caller asks for another stage.
-    statuses: [STATUS_FILTER[input.status ?? 'active']],
+    statuses: [...STATUS_FILTER[input.status ?? 'active']],
     ...(input.category === undefined ? {} : { categories: [input.category] }),
     ...(input.pageSize === undefined ? {} : { take: input.pageSize }),
     ...(input.endAfter === undefined ? {} : { expiresAfter: input.endAfter }),
