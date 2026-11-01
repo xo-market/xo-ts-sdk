@@ -2,9 +2,12 @@
 // Node-only parts live in `@xomarket/client/node`, the signers of a private key or a viem
 // account in `@xomarket/client/viem`, the signing kit in `@xomarket/client/signing`).
 //
-// Explicit names only: never `export *`, and nothing marked `@internal` or from an
+// Explicit names only: never `export *`, and nothing tagged internal or from an
 // `internal.ts`. What is here is what a user names to create a client, call it, read what it
 // returns or catch what it throws. `test/exports.test.ts` pins the names.
+//
+// Never write the internal tag itself in a comment here: the declaration build strips every
+// statement whose leading comments contain it, and this comment leads the first export.
 
 /**
  * `@xomarket/client`: the two clients (`createPublicClient` and `createSecureClient`), what

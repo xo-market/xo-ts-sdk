@@ -1,7 +1,13 @@
-// After `build`: every name the published declarations reach from an entry's exports must be
-// exported by that entry. It reads the built `dist/**/*.d.ts` and `*.d.cts`,
-// chunks included, so types the compiler inferred (which the source-level closure test in
-// `test/exports.test.ts` cannot see) are checked too. `pnpm check:package` runs it.
+// After `build`, two checks of the published declarations, `dist/**/*.d.ts` and `*.d.cts`:
+//
+// - Each entry declares exactly the names pinned in `test/exports.lists.ts`, values as values.
+//   The source-level test of those lists cannot see what the declaration build drops (a name
+//   the JavaScript exports but TypeScript users could not import).
+// - Every name the declarations reach from an entry's exports is exported by that entry,
+//   chunks included, so types the compiler inferred (which the source-level closure test in
+//   `test/exports.test.ts` cannot see) are checked too.
+//
+// `pnpm check:package` runs it.
 //
 // The one exception is ALLOWED_VALUES: the readonly tuples behind the closed unions (such as
 // `OrderRejectionCode = (typeof ORDER_REJECTION_CODES)[number]`). They are values, every alias
@@ -9,7 +15,7 @@
 // an enum (`OrderSide.BUY` as a type) is reached through its enum, which is what must be
 // exported.
 
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
@@ -146,6 +152,162 @@ export function scanDeclarations(entries, distDir) {
   return { problems, allowedSeen };
 }
 
+/**
+ * The names a declaration file exports, sorted: runtime values, and names that exist as types
+ * only (an interface, an alias, or anything exported with `export type`).
+ *
+ * @param {string} entry
+ * @returns {{ values: string[], types: string[] }}
+ */
+export function declaredExports(entry) {
+  const program = ts.createProgram([entry], {
+    noEmit: true,
+    skipLibCheck: true,
+    strict: true,
+    target: ts.ScriptTarget.ES2022,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+  });
+  const checker = program.getTypeChecker();
+  const file = program.getSourceFile(entry);
+  const moduleSymbol = file && checker.getSymbolAtLocation(file);
+  if (moduleSymbol === undefined) {
+    throw new Error(`${entry}: not a module`);
+  }
+  const values = [];
+  const types = [];
+  for (const exported of checker.getExportsOfModule(moduleSymbol)) {
+    const target =
+      exported.flags & ts.SymbolFlags.Alias
+        ? checker.getAliasedSymbol(exported)
+        : exported;
+    const typeOnly = (exported.declarations ?? []).some(
+      (d) =>
+        ts.isExportSpecifier(d) && (d.isTypeOnly || d.parent.parent.isTypeOnly),
+    );
+    if (target.flags & ts.SymbolFlags.Value && !typeOnly) {
+      values.push(exported.name);
+    } else {
+      types.push(exported.name);
+    }
+  }
+  return { values: values.sort(), types: types.sort() };
+}
+
+/** The four entries, as the pinned lists name them (`MAIN_VALUES`, `NODE_TYPES`, ...). */
+const PINNED_ENTRIES = ['main', 'node', 'signing', 'viem'];
+
+/**
+ * The pinned public API of each entry, read from `test/exports.lists.ts` without running it:
+ * the string elements of each `<ENTRY>_VALUES` and `<ENTRY>_TYPES` array.
+ *
+ * @param {string} listsFile
+ * @returns {Record<string, { values: string[], types: string[] }>}
+ */
+export function readPinnedLists(listsFile) {
+  const source = ts.createSourceFile(
+    listsFile,
+    readFileSync(listsFile, 'utf8'),
+    ts.ScriptTarget.ES2022,
+  );
+  const arrays = new Map();
+  for (const statement of source.statements) {
+    if (!ts.isVariableStatement(statement)) {
+      continue;
+    }
+    for (const declaration of statement.declarationList.declarations) {
+      let init = declaration.initializer;
+      while (init !== undefined && ts.isAsExpression(init)) {
+        init = init.expression;
+      }
+      if (
+        !ts.isIdentifier(declaration.name) ||
+        init === undefined ||
+        !ts.isArrayLiteralExpression(init)
+      ) {
+        continue;
+      }
+      const name = declaration.name.text;
+      arrays.set(
+        name,
+        init.elements.map((element) => {
+          if (!ts.isStringLiteral(element)) {
+            throw new Error(
+              `${listsFile}: ${name} holds something other than a string`,
+            );
+          }
+          return element.text;
+        }),
+      );
+    }
+  }
+  const lists = {};
+  for (const entry of PINNED_ENTRIES) {
+    const pick = (kind) => {
+      const name = `${entry.toUpperCase()}_${kind}`;
+      const list = arrays.get(name);
+      if (list === undefined) {
+        throw new Error(`${listsFile}: no ${name} array`);
+      }
+      return list;
+    };
+    lists[entry] = { values: pick('VALUES'), types: pick('TYPES') };
+  }
+  return lists;
+}
+
+/**
+ * Which pinned entry a published declaration file belongs to, from its path under `dist`.
+ *
+ * @param {string} file
+ * @returns {string}
+ */
+export function pinnedEntryOf(file) {
+  const stem = file
+    .replaceAll('\\', '/')
+    .replace(/\.d\.c?ts$/, '')
+    .replace(/\/index$/, '');
+  return stem === 'index' ? 'main' : stem;
+}
+
+/**
+ * What differs between the names a declaration file exports and its entry's pinned lists. A
+ * pinned name the declarations lack is one the build dropped: the JavaScript exports it, but
+ * TypeScript users cannot import it.
+ *
+ * @param {string} file
+ * @param {{ values: string[], types: string[] }} declared
+ * @param {{ values: readonly string[], types: readonly string[] }} pinned
+ * @returns {string[]}
+ */
+export function comparePinned(file, declared, pinned) {
+  const problems = [];
+  const declaredAll = new Set([...declared.values, ...declared.types]);
+  const pinnedAll = new Set([...pinned.values, ...pinned.types]);
+  for (const name of [...pinned.values, ...pinned.types].sort()) {
+    if (!declaredAll.has(name)) {
+      problems.push(`${file}: ${name} is pinned but not declared`);
+    } else if (
+      pinned.values.includes(name) &&
+      !declared.values.includes(name)
+    ) {
+      problems.push(
+        `${file}: ${name} is a pinned value but the declarations have it as a type only`,
+      );
+    } else if (pinned.types.includes(name) && !declared.types.includes(name)) {
+      problems.push(
+        `${file}: ${name} is a pinned type but the declarations have it as a runtime value`,
+      );
+    }
+  }
+  for (const name of [...declaredAll].sort()) {
+    if (!pinnedAll.has(name)) {
+      problems.push(`${file}: ${name} is declared but not in the pinned lists`);
+    }
+  }
+  return problems;
+}
+
 /** The published entries of this package: ESM and CommonJS declarations. */
 export function packageEntries(distDir) {
   return [
@@ -178,6 +340,19 @@ if (process.argv[1] !== undefined && resolve(process.argv[1]) === main) {
       `ALLOWED_VALUES names ${name}, which no declaration reaches any more: drop it`,
     );
   }
+  const pinned = readPinnedLists(
+    resolve(dirname(main), '../test/exports.lists.ts'),
+  );
+  for (const entry of entries) {
+    const file = entry.slice(distDir.length + 1);
+    problems.push(
+      ...comparePinned(
+        file,
+        declaredExports(entry),
+        pinned[pinnedEntryOf(file)],
+      ),
+    );
+  }
   if (problems.length > 0) {
     console.error(`check-dts: ${problems.length} problem(s)`);
     for (const problem of problems) {
@@ -186,6 +361,6 @@ if (process.argv[1] !== undefined && resolve(process.argv[1]) === main) {
     process.exit(1);
   }
   console.log(
-    `check-dts: ${entries.length} entries, every reachable declaration exported (${allowedSeen.size} allowed value tuples)`,
+    `check-dts: ${entries.length} entries declare exactly their pinned names, and every reachable declaration is exported (${allowedSeen.size} allowed value tuples)`,
   );
 }
