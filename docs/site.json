@@ -11,7 +11,7 @@
         {
           "source": "README.md",
           "slug": "overview",
-          "sidebarTitle": "TypeScript SDK",
+          "sidebarTitle": "Introduction",
           "description": "Read markets, stream live data, trade and move funds from your server."
         },
         {
