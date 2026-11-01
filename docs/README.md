@@ -32,8 +32,23 @@ yarn add @xomarket/client viem
 bun add @xomarket/client viem
 ```
 
-In TypeScript, set `moduleResolution` to `NodeNext`, `Node16` or `Bundler`. Signers are in
-`@xomarket/client/viem`, `fileStore` in `/node`, and low-level signing in `/signing`.
+The code on these pages uses top-level `await`, so it runs as an ES module. In a new project, add
+`"type": "module"` to `package.json`, and this `tsconfig.json`:
+
+<!-- snippet: none -->
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true
+  }
+}
+```
+
+In an existing project, set `moduleResolution` to `Bundler`, `NodeNext` or `Node16`.
 
 Then create a public client and list some markets. Reading public data needs no key.
 
@@ -50,7 +65,10 @@ for (const market of page.items) {
 }
 ```
 
-More runnable scripts are in the [examples folder](../examples/scripts/README.md).
+Save it as `quickstart.ts` and run it with `npx tsx quickstart.ts`.
+
+Signers are in `@xomarket/client/viem`, `fileStore` in `/node`, and low-level signing in
+`/signing`. More runnable scripts are in the [examples folder](../examples/scripts/README.md).
 
 ## Pagination
 

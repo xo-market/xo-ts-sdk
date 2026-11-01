@@ -4,7 +4,8 @@ This guide buys 1 USDC of YES in one market and shows your position. XO runs on 
 USDC is real. Use a wallet that holds only what you can afford to lose.
 
 You need the wallet's private key in `XO_PK` and at least 1 USDC in your XO account. To add USDC,
-see [Deposit](deposit.md).
+see [Deposit](deposit.md). Set up the project as in the [Quickstart](README.md#quickstart), and
+put the steps below in one file.
 
 ## 1. Sign in
 
