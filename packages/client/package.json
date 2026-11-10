@@ -1,6 +1,6 @@
 {
   "name": "@xomarket/client",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "TypeScript SDK for XO Market",
   "license": "MIT",
   "keywords": [
