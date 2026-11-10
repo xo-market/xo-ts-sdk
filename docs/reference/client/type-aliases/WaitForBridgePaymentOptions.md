@@ -12,7 +12,7 @@ wait in all. A wait is not retried: it reads the payment again until it is final
 ### signal?
 
 ```ts
-optional signal?: AbortSignal;
+signal?: AbortSignal;
 ```
 
 Ends the wait: it rejects with a `RequestAbortedError` whose `cause` is the signal's reason.
@@ -22,7 +22,7 @@ Ends the wait: it rejects with a `RequestAbortedError` whose `cause` is the sign
 ### timeout?
 
 ```ts
-optional timeout?: number;
+timeout?: number;
 ```
 
 How long to wait in all, in whole milliseconds, from 1 to 86 400 000 (24 hours). Defaults

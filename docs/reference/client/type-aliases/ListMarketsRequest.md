@@ -12,7 +12,7 @@ trade on the order book to be listed, whatever the filters say.
 ### category?
 
 ```ts
-optional category?: string;
+category?: string;
 ```
 
 Only markets in this category, by its name, such as `Sports`, in any case. Not with `eventId` or `seriesId`.
@@ -22,7 +22,7 @@ Only markets in this category, by its name, such as `Sports`, in any case. Not w
 ### endAfter?
 
 ```ts
-optional endAfter?: Date;
+endAfter?: Date;
 ```
 
 Only markets that end after this time. Not with `eventId` or `seriesId`.
@@ -32,7 +32,7 @@ Only markets that end after this time. Not with `eventId` or `seriesId`.
 ### eventId?
 
 ```ts
-optional eventId?: string;
+eventId?: string;
 ```
 
 Only the markets of this event, its sub-events included. An event's id, a UUID.
@@ -42,7 +42,7 @@ Only the markets of this event, its sub-events included. An event's id, a UUID.
 ### order?
 
 ```ts
-optional order?: "asc" | "desc";
+order?: "asc" | "desc";
 ```
 
 The direction of `sort`. Defaults to `desc`.
@@ -52,7 +52,7 @@ The direction of `sort`. Defaults to `desc`.
 ### pageSize?
 
 ```ts
-optional pageSize?: number;
+pageSize?: number;
 ```
 
 How many markets a page holds, from 1 to 50.
@@ -62,7 +62,7 @@ How many markets a page holds, from 1 to 50.
 ### seriesId?
 
 ```ts
-optional seriesId?: string;
+seriesId?: string;
 ```
 
 Only the markets of this series. A series' id, a UUID.
@@ -72,7 +72,7 @@ Only the markets of this series. A series' id, a UUID.
 ### sort?
 
 ```ts
-optional sort?: "volume" | "created" | "endDate" | "liquidity";
+sort?: "volume" | "created" | "endDate" | "liquidity";
 ```
 
 What to order by: `volume` (high-volume markets first, in XO's own ranking, which does not
@@ -85,7 +85,7 @@ or `seriesId`.
 ### status?
 
 ```ts
-optional status?: "active" | "closed" | "resolved";
+status?: "active" | "closed" | "resolved";
 ```
 
 Only markets in this stage of their life: `active` (open for trading and not past their

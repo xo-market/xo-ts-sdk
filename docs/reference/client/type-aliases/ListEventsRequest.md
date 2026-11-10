@@ -11,7 +11,7 @@ What [PublicClient.listEvents](../interfaces/PublicClient.md#listevents) takes. 
 ### categoryId?
 
 ```ts
-optional categoryId?: string;
+categoryId?: string;
 ```
 
 Only the events in this category. A category's id (`Category.id`), digits.
@@ -21,7 +21,7 @@ Only the events in this category. A category's id (`Category.id`), digits.
 ### pageSize?
 
 ```ts
-optional pageSize?: number;
+pageSize?: number;
 ```
 
 How many events a page holds, from 1 to 1000.
@@ -31,7 +31,7 @@ How many events a page holds, from 1 to 1000.
 ### search?
 
 ```ts
-optional search?: string;
+search?: string;
 ```
 
 Only events that match this text.
@@ -41,7 +41,7 @@ Only events that match this text.
 ### seriesId?
 
 ```ts
-optional seriesId?: string;
+seriesId?: string;
 ```
 
 Only the events of this series. A series' id, a UUID.
@@ -51,7 +51,7 @@ Only the events of this series. A series' id, a UUID.
 ### withMarkets?
 
 ```ts
-optional withMarkets?: boolean;
+withMarkets?: boolean;
 ```
 
 Load each event's markets into `Event.markets`, which a list leaves `null`. It needs

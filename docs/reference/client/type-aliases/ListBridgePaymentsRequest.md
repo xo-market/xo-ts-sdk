@@ -11,7 +11,7 @@ What [SecureClient.listBridgePayments](../interfaces/SecureClient.md#listbridgep
 ### direction?
 
 ```ts
-optional direction?: BridgeDirection;
+direction?: BridgeDirection;
 ```
 
 Only deposits or only withdrawals. Both when left out.
@@ -21,7 +21,7 @@ Only deposits or only withdrawals. Both when left out.
 ### status?
 
 ```ts
-optional status?: BridgePaymentStatus;
+status?: BridgePaymentStatus;
 ```
 
 Only the payments in this status, such as `COMPLETE`. A quote nobody confirmed is never listed.

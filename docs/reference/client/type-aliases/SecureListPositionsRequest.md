@@ -12,7 +12,7 @@ and the wallet is the client's own when `user` is left out.
 ### market?
 
 ```ts
-optional market?: string;
+market?: string;
 ```
 
 Only the positions of this market: its condition id, `0x` and 64 hex digits.
@@ -22,7 +22,7 @@ Only the positions of this market: its condition id, `0x` and 64 hex digits.
 ### redeemable?
 
 ```ts
-optional redeemable?: boolean;
+redeemable?: boolean;
 ```
 
 `true` lists only the positions the SDK can redeem now (`Position.redeemable`): their
@@ -34,7 +34,7 @@ lists only the others.
 ### user?
 
 ```ts
-optional user?: string;
+user?: string;
 ```
 
 The wallet whose positions to list. Leave it out for the client's own wallet.

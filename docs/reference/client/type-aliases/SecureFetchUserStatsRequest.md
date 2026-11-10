@@ -12,7 +12,7 @@ client's own account.
 ### username?
 
 ```ts
-optional username?: string;
+username?: string;
 ```
 
 The user's unique name on XO. Leave it out for the client's own account.

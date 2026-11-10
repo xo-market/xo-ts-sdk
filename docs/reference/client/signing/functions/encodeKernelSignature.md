@@ -11,7 +11,7 @@ signature of a signatureType 3 order, or as the ERC-1271 signature.
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
-| `ecdsa` | `` `0x${string}` `` | The owner's 65-byte `r || s || v` signature over the digest from [kernelWrapTypedData](kernelWrapTypedData.md). |
+| `ecdsa` | `` `0x${string}` `` | The owner's 65-byte `r \|\| s \|\| v` signature over the digest from [kernelWrapTypedData](kernelWrapTypedData.md). |
 
 ## Returns
 

@@ -21,7 +21,7 @@ The outcome token to sell: `outcomes.yes.tokenId` or `outcomes.no.tokenId` of a 
 ### minPrice?
 
 ```ts
-optional minPrice?: number | string;
+minPrice?: number | string;
 ```
 
 The lowest price per share to take: the order only fills at this price or better. From
@@ -33,7 +33,7 @@ down to 0.001.
 ### orderType?
 
 ```ts
-optional orderType?: 
+orderType?: 
   | FAK
   | FOK;
 ```

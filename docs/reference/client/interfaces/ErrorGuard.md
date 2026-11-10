@@ -20,7 +20,7 @@ try {
 
 | Type Parameter |
 | ------ |
-| `E` *extends* [`XoError`](../classes/XoError.md) |
+| <a id="type-parameter-e"></a> `E` *extends* [`XoError`](../classes/XoError.md) |
 
 ## Methods
 

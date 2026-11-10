@@ -11,4 +11,4 @@ does not know does not compile, as an option a call does not take does not.
 
 | Type Parameter |
 | ------ |
-| `S` *extends* readonly `unknown`[] |
+| <a id="type-parameter-s"></a> `S` *extends* readonly `unknown`[] |

@@ -11,7 +11,7 @@ What [SecureClient.fetchUserPnl](../interfaces/SecureClient.md#fetchuserpnl) tak
 ### marketId?
 
 ```ts
-optional marketId?: undefined;
+marketId?: undefined;
 ```
 
 Not given: the whole account.
@@ -21,7 +21,7 @@ Not given: the whole account.
 ### positionId?
 
 ```ts
-optional positionId?: undefined;
+positionId?: undefined;
 ```
 
 Not given: the whole account.

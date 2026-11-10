@@ -21,7 +21,7 @@ The outcome token whose prices to read: a decimal string of digits.
 ### endTs?
 
 ```ts
-optional endTs?: number;
+endTs?: number;
 ```
 
 Only points at or before this time, in Unix seconds.
@@ -31,7 +31,7 @@ Only points at or before this time, in Unix seconds.
 ### fidelity?
 
 ```ts
-optional fidelity?: number;
+fidelity?: number;
 ```
 
 How many of the newest points to read from the order book, from 1 to 500. The order book
@@ -53,7 +53,7 @@ or `max` for as far back as the points reach.
 ### startTs?
 
 ```ts
-optional startTs?: number;
+startTs?: number;
 ```
 
 Only points at or after this time, in Unix seconds.

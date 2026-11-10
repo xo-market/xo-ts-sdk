@@ -9,7 +9,7 @@ client as it is. They are secrets: keep them out of logs.
 ### backend?
 
 ```ts
-optional backend?: object;
+backend?: object;
 ```
 
 An API key of the wallet's account. `id` and `expiresAt` are the key's metadata, when known:
@@ -25,13 +25,13 @@ apiKey: string;
 #### expiresAt?
 
 ```ts
-optional expiresAt?: string;
+expiresAt?: string;
 ```
 
 #### id?
 
 ```ts
-optional id?: string;
+id?: string;
 ```
 
 ***
@@ -39,7 +39,7 @@ optional id?: string;
 ### orderbook?
 
 ```ts
-optional orderbook?: object;
+orderbook?: object;
 ```
 
 The wallet's own order book credentials: the ones signing in derives for it.

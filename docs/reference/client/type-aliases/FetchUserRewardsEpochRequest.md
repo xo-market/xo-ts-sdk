@@ -11,7 +11,7 @@ What [PublicClient.fetchUserRewardsEpoch](../interfaces/PublicClient.md#fetchuse
 ### epoch?
 
 ```ts
-optional epoch?: number;
+epoch?: number;
 ```
 
 The UTC day: whole days since 1970-01-01, from 0 to 10,000,000. Defaults to today, the day

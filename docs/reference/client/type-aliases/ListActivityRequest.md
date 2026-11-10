@@ -11,7 +11,7 @@ What [SecureClient.listActivity](../interfaces/SecureClient.md#listactivity) tak
 ### marketId?
 
 ```ts
-optional marketId?: string;
+marketId?: string;
 ```
 
 Only the activity of this market: XO's id for it, the `id` of a `Market`.
@@ -21,7 +21,7 @@ Only the activity of this market: XO's id for it, the `id` of a `Market`.
 ### pageSize?
 
 ```ts
-optional pageSize?: number;
+pageSize?: number;
 ```
 
 How many rows XO reads for a page, from 1 to 50.
@@ -31,7 +31,7 @@ How many rows XO reads for a page, from 1 to 50.
 ### type?
 
 ```ts
-optional type?: typeof ACTIVITY_TYPES[number];
+type?: typeof ACTIVITY_TYPES[number];
 ```
 
 Only rows of this kind, such as `TRADE` (buys and sells) or `REDEEM`.

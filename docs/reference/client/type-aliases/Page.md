@@ -17,7 +17,7 @@ console.log(page.items.length, page.hasMore);
 
 | Type Parameter |
 | ------ |
-| `T` |
+| <a id="type-parameter-t"></a> `T` |
 
 ## Properties
 
@@ -44,7 +44,7 @@ The rows of this page.
 ### limitReached?
 
 ```ts
-optional limitReached?: boolean;
+limitReached?: boolean;
 ```
 
 `true` on the last page a listing can reach, when more rows exist beyond its depth cap.
@@ -56,7 +56,7 @@ the listing ended by itself.
 ### nextCursor?
 
 ```ts
-optional nextCursor?: string;
+nextCursor?: string;
 ```
 
 Where the next page starts, for `from`. Opaque: keep it as given. Only while `hasMore` is
@@ -67,7 +67,7 @@ Where the next page starts, for `from`. Opaque: keep it as given. Only while `ha
 ### totalCount?
 
 ```ts
-optional totalCount?: number;
+totalCount?: number;
 ```
 
 How many rows the whole listing holds, when the service says.

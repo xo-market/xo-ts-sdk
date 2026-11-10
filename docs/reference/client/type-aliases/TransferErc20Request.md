@@ -32,7 +32,7 @@ Who receives the tokens: an address. It may be neither the zero address nor the 
 ### token?
 
 ```ts
-optional token?: string;
+token?: string;
 ```
 
 The token's contract address. Leave it out for XO's USDC, the money of the markets.

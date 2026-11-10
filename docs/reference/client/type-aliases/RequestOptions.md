@@ -22,7 +22,7 @@ const options: RequestOptions = { signal: controller.signal, timeout: 5_000, ret
 ### retries?
 
 ```ts
-optional retries?: number;
+retries?: number;
 ```
 
 How many times a read is tried again after a network error or a 429, 502, 503 or 504: a
@@ -35,7 +35,7 @@ is not waited, and the error goes back to you with `retryAfter` set.
 ### signal?
 
 ```ts
-optional signal?: AbortSignal;
+signal?: AbortSignal;
 ```
 
 Cancels the call: every attempt, the waits between attempts and reading the answer. The
@@ -48,7 +48,7 @@ is the signal's reason.
 ### timeout?
 
 ```ts
-optional timeout?: number | false;
+timeout?: number | false;
 ```
 
 How long each attempt may take, in whole milliseconds, before it fails with a

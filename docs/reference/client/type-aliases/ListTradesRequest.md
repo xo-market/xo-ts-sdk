@@ -21,7 +21,7 @@ The market whose fills to list: XO's id for it (`Market.id`), digits.
 ### pageSize?
 
 ```ts
-optional pageSize?: number;
+pageSize?: number;
 ```
 
 How many fills a page holds, from 1 to 50. XO's own page size when left out.
@@ -31,7 +31,7 @@ How many fills a page holds, from 1 to 50. XO's own page size when left out.
 ### side?
 
 ```ts
-optional side?: SideInput;
+side?: SideInput;
 ```
 
 Only buys or only sells.

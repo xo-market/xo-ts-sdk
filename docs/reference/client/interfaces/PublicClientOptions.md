@@ -11,7 +11,7 @@ The options of [createPublicClient](../functions/createPublicClient.md). Every o
 ### environment?
 
 ```ts
-optional environment?: EnvironmentConfig;
+environment?: EnvironmentConfig;
 ```
 
 Where the client reads: the hosts and contracts of an environment. Leave it out for XO
@@ -22,7 +22,7 @@ mainnet. Pass your own config only to point at another deployment, such as a loc
 ### fetch?
 
 ```ts
-optional fetch?: (input, init?) => Promise<Response>;
+fetch?: (input, init?) => Promise<Response>;
 ```
 
 The `fetch` of every request. Defaults to the global one. The reads of the chain use the
@@ -44,7 +44,7 @@ global `fetch` regardless.
 ### onRateLimitUpdate?
 
 ```ts
-optional onRateLimitUpdate?: (update) => void;
+onRateLimitUpdate?: (update) => void;
 ```
 
 Called with the rate-limit information of every response that carries it, and of every 429.
@@ -65,7 +65,7 @@ An error it throws is ignored.
 ### WebSocket?
 
 ```ts
-optional WebSocket?: (url, protocols?) => WebSocket;
+WebSocket?: new (url, protocols?) => WebSocket;
 ```
 
 The WebSocket constructor of the live channels. Defaults to the global `WebSocket`.

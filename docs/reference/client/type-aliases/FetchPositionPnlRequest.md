@@ -11,7 +11,7 @@ What [SecureClient.fetchUserPnl](../interfaces/SecureClient.md#fetchuserpnl) tak
 ### marketId?
 
 ```ts
-optional marketId?: undefined;
+marketId?: undefined;
 ```
 
 Not given with a position.

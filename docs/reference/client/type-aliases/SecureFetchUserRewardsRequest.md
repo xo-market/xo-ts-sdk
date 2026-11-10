@@ -11,7 +11,7 @@ What `fetchUserRewards` takes on a signed-in client: a wallet, or none for its o
 ### user?
 
 ```ts
-optional user?: string;
+user?: string;
 ```
 
 The wallet whose rewards to read. Leave it out for the client's own wallet.

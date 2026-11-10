@@ -11,7 +11,7 @@ What [PublicClient.listSeries](../interfaces/PublicClient.md#listseries) takes.
 ### active?
 
 ```ts
-optional active?: boolean;
+active?: boolean;
 ```
 
 Only series that are running (`true`, the default) or that are not (`false`).
