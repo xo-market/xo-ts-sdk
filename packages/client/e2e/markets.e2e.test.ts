@@ -75,10 +75,18 @@ describeLive('Live markets, events and the catalog on mainnet (strict)', () => {
           client.listMarkets({ status, pageSize: 5 }).firstPage(),
         );
         for (const row of page.items) {
-          expect(row.state.active).toBe(false);
-          expect(row.state.closed).toBe(true);
           if (status === 'resolved') {
-            expect(row.state.status).toBe('RESOLVED');
+            // A decided market is RESOLVED, then CLOSED for good.
+            expect(['RESOLVED', 'CLOSED']).toContain(row.state.status);
+            expect(row.state.closed).toBe(true);
+          } else {
+            // Past its end time with no outcome yet: XO still reads it ACTIVE.
+            expect(row.state.status).toBe('ACTIVE');
+            expect(row.state.closed).toBe(false);
+            expect(row.state.endDate).not.toBeNull();
+            expect(Date.parse(row.state.endDate ?? '')).toBeLessThanOrEqual(
+              Date.now(),
+            );
           }
         }
       }
