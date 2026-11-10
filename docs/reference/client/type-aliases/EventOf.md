@@ -10,4 +10,4 @@ The events a spec (or a union of specs) delivers.
 
 | Type Parameter |
 | ------ |
-| `S` |
+| <a id="type-parameter-s"></a> `S` |

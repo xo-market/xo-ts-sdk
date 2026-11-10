@@ -11,7 +11,7 @@ What [SecureClient.listAccountTrades](../interfaces/SecureClient.md#listaccountt
 ### after?
 
 ```ts
-optional after?: Date | number;
+after?: Date | number;
 ```
 
 Only the trades matched at or after this time: a `Date`, or unix seconds.
@@ -21,7 +21,7 @@ Only the trades matched at or after this time: a `Date`, or unix seconds.
 ### assetId?
 
 ```ts
-optional assetId?: string;
+assetId?: string;
 ```
 
 Only the trades of this outcome token.
@@ -31,7 +31,7 @@ Only the trades of this outcome token.
 ### before?
 
 ```ts
-optional before?: Date | number;
+before?: Date | number;
 ```
 
 Only the trades matched before this time: a `Date`, or unix seconds.
@@ -41,7 +41,7 @@ Only the trades matched before this time: a `Date`, or unix seconds.
 ### market?
 
 ```ts
-optional market?: string;
+market?: string;
 ```
 
 Only the trades of this market: its condition id, `0x` and 64 hex digits.

@@ -41,7 +41,7 @@ try {
 
 | Type Parameter |
 | ------ |
-| `E` |
+| <a id="type-parameter-e"></a> `E` |
 
 ## Methods
 

@@ -30,7 +30,7 @@ The wallet's `0x` address.
 ### signHash()?
 
 ```ts
-optional signHash(hash): Promise<`0x${string}`>;
+signHash?(hash): Promise<`0x${string}`>;
 ```
 
 A signature of a raw 32-byte digest, with no prefix and no hashing. Only a signer that

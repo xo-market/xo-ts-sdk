@@ -16,7 +16,7 @@ The signed envelope for `eth_sendRawTransaction`:
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
 | `tx` | [`EvTx`](../interfaces/EvTx.md) | - |
-| `feePayerSignature` | `` `0x${string}` `` \| `null` | the sponsor's 65-byte `r||s||v` signature, passed verbatim; `null` for a self-paid (unsponsored) transaction. |
+| `feePayerSignature` | `` `0x${string}` `` \| `null` | the sponsor's 65-byte `r\|\|s\|\|v` signature, passed verbatim; `null` for a self-paid (unsponsored) transaction. |
 | `exec` | [`ExecutorSignature`](../interfaces/ExecutorSignature.md) | - |
 
 ## Returns

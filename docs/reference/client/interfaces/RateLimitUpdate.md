@@ -20,7 +20,7 @@ const client = createPublicClient({
 ### limit?
 
 ```ts
-optional limit?: number;
+limit?: number;
 ```
 
 From `X-RateLimit-Limit`.
@@ -40,7 +40,7 @@ The request path, without the query.
 ### remaining?
 
 ```ts
-optional remaining?: number;
+remaining?: number;
 ```
 
 From `X-RateLimit-Remaining`.
@@ -50,7 +50,7 @@ From `X-RateLimit-Remaining`.
 ### resetMs?
 
 ```ts
-optional resetMs?: number;
+resetMs?: number;
 ```
 
 From `X-RateLimit-Reset`, which is in seconds, converted to milliseconds.
@@ -60,7 +60,7 @@ From `X-RateLimit-Reset`, which is in seconds, converted to milliseconds.
 ### retryAfter?
 
 ```ts
-optional retryAfter?: number;
+retryAfter?: number;
 ```
 
 How long the service asks to wait, in milliseconds: from `retry_after_ms` or `Retry-After` on a 429.

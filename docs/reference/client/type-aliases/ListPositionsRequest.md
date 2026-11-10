@@ -11,7 +11,7 @@ What [PublicClient.listPositions](../interfaces/PublicClient.md#listpositions) t
 ### market?
 
 ```ts
-optional market?: string;
+market?: string;
 ```
 
 Only the positions of this market: its condition id, `0x` and 64 hex digits.
@@ -21,7 +21,7 @@ Only the positions of this market: its condition id, `0x` and 64 hex digits.
 ### redeemable?
 
 ```ts
-optional redeemable?: boolean;
+redeemable?: boolean;
 ```
 
 `true` lists only the positions the SDK can redeem now (`Position.redeemable`): their

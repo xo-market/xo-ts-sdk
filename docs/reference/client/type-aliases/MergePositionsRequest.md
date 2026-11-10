@@ -11,7 +11,7 @@ What [SecureClient.mergePositions](../interfaces/SecureClient.md#mergepositions)
 ### amount?
 
 ```ts
-optional amount?: string | number;
+amount?: string | number;
 ```
 
 How many full sets to merge, in whole shares (`'5'` merges 5 YES and 5 NO for 5 USDC), with

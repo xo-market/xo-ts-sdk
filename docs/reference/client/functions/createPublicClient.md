@@ -11,7 +11,7 @@ request is the first read you make. It holds no credential, and its reads send n
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
-| `options` | [`PublicClientOptions`](../interfaces/PublicClientOptions.md) | Where to read (`environment`, XO mainnet by default), the `fetch` and `WebSocket` to use, and a callback for rate-limit updates. Retries, timeouts and cancelling belong to each call, not to the client. |
+| `options?` | [`PublicClientOptions`](../interfaces/PublicClientOptions.md) | Where to read (`environment`, XO mainnet by default), the `fetch` and `WebSocket` to use, and a callback for rate-limit updates. Retries, timeouts and cancelling belong to each call, not to the client. |
 
 ## Returns
 

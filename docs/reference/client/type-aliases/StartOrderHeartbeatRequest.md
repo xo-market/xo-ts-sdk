@@ -11,7 +11,7 @@ What [SecureClient.startOrderHeartbeat](../interfaces/SecureClient.md#startorder
 ### intervalMs?
 
 ```ts
-optional intervalMs?: number;
+intervalMs?: number;
 ```
 
 Milliseconds between two beats: a whole number from 1 000 to 20 000. Defaults to 10 000.
@@ -21,7 +21,7 @@ Milliseconds between two beats: a whole number from 1 000 to 20 000. Defaults to
 ### onMissed?
 
 ```ts
-optional onMissed?: (error) => void;
+onMissed?: (error) => void;
 ```
 
 Called with the error of every beat that did not count: XO answered that it did not track

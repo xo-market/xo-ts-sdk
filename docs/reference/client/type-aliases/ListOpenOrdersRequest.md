@@ -11,7 +11,7 @@ What [SecureClient.listOpenOrders](../interfaces/SecureClient.md#listopenorders)
 ### assetId?
 
 ```ts
-optional assetId?: string;
+assetId?: string;
 ```
 
 Only the orders of this outcome token.
@@ -21,7 +21,7 @@ Only the orders of this outcome token.
 ### market?
 
 ```ts
-optional market?: string;
+market?: string;
 ```
 
 Only the orders of this market: its condition id, `0x` and 64 hex digits.

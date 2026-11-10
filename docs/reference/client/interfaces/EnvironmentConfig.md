@@ -23,7 +23,7 @@ backendUrl: string;
 ### bridge?
 
 ```ts
-optional bridge?: boolean;
+bridge?: boolean;
 ```
 
 Whether this environment has the deposit and withdrawal bridge. Leave it out, or set it to
@@ -158,7 +158,7 @@ The `URI` of that message, for example `https://beta.xo.market`. Compared as wri
 ### sponsorUrl?
 
 ```ts
-optional sponsorUrl?: string;
+sponsorUrl?: string;
 ```
 
 This environment's gas path is the sponsor: the service that pays the gas of sponsored

@@ -11,7 +11,7 @@ What [PublicClient.listRewardGroups](../interfaces/PublicClient.md#listrewardgro
 ### currency?
 
 ```ts
-optional currency?: "CP" | "USDC";
+currency?: "CP" | "USDC";
 ```
 
 Only the groups that pay in this currency.
@@ -21,7 +21,7 @@ Only the groups that pay in this currency.
 ### includeInactive?
 
 ```ts
-optional includeInactive?: boolean;
+includeInactive?: boolean;
 ```
 
 Also list the groups that are not paying now.
@@ -31,7 +31,7 @@ Also list the groups that are not paying now.
 ### pageSize?
 
 ```ts
-optional pageSize?: number;
+pageSize?: number;
 ```
 
 How many groups a page holds, from 1 to 100.

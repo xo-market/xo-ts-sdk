@@ -11,7 +11,7 @@ What [SecureClient.listRewardsLeaderboard](../interfaces/SecureClient.md#listrew
 ### pageSize?
 
 ```ts
-optional pageSize?: number;
+pageSize?: number;
 ```
 
 How many makers a page holds, from 1 to 1000.
@@ -21,7 +21,7 @@ How many makers a page holds, from 1 to 1000.
 ### period?
 
 ```ts
-optional period?: "daily" | "weekly" | "seasonal";
+period?: "daily" | "weekly" | "seasonal";
 ```
 
 The window: the day, the last 7 days or the season. Defaults to `weekly`.

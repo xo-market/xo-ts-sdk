@@ -20,7 +20,7 @@ new PaginationLimitError(message, opts?): PaginationLimitError;
 | Parameter | Type |
 | ------ | ------ |
 | `message` | `string` |
-| `opts` | [`XoErrorOptions`](../interfaces/XoErrorOptions.md) |
+| `opts?` | [`XoErrorOptions`](../interfaces/XoErrorOptions.md) |
 
 #### Returns
 
@@ -47,7 +47,7 @@ readonly code: string;
 ### mayHaveLanded?
 
 ```ts
-readonly optional mayHaveLanded?: boolean;
+readonly mayHaveLanded?: boolean;
 ```
 
 Whether the operation may have taken effect although this error was thrown. Set on an
@@ -66,7 +66,7 @@ the open orders with `listOpenOrders()`). `undefined` on every other error.
 ### orderHash?
 
 ```ts
-readonly optional orderHash?: OrderHash;
+readonly orderHash?: OrderHash;
 ```
 
 The EIP-712 hash of the signed order whose placement threw, for `reconcileOrder`. Set on
@@ -81,7 +81,7 @@ the errors of placing or posting one order; `undefined` otherwise.
 ### paymentId?
 
 ```ts
-readonly optional paymentId?: string;
+readonly paymentId?: string;
 ```
 
 The id of the bridge payment the failed operation was about, for
@@ -99,7 +99,7 @@ doing anything else, and never confirm the quote again.
 ### requestId?
 
 ```ts
-readonly optional requestId?: string;
+readonly requestId?: string;
 ```
 
 #### Inherited from
@@ -123,7 +123,7 @@ readonly service: Service;
 ### status?
 
 ```ts
-readonly optional status?: number;
+readonly status?: number;
 ```
 
 #### Inherited from
@@ -135,7 +135,7 @@ readonly optional status?: number;
 ### topic?
 
 ```ts
-readonly optional topic?: "market" | "user" | "portfolio" | "activity";
+readonly topic?: "market" | "user" | "portfolio" | "activity";
 ```
 
 The topic an error of a live subscription is about: `'market'`, `'user'`, `'portfolio'` or

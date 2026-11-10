@@ -27,7 +27,7 @@ The target. Any case: it is checksummed.
 ### value?
 
 ```ts
-optional value?: bigint;
+value?: bigint;
 ```
 
 Wei to send. Defaults to 0.

@@ -11,7 +11,7 @@ The `market` topic: the books, price changes and fills of outcome tokens or mark
 ### assetIds?
 
 ```ts
-optional assetIds?: readonly string[];
+assetIds?: readonly string[];
 ```
 
 Outcome tokens, by id (the `assetId` of an order book). Their events only, even though the
@@ -22,7 +22,7 @@ service sends their market's.
 ### markets?
 
 ```ts
-optional markets?: readonly string[];
+markets?: readonly string[];
 ```
 
 Markets, by condition id: the events of every outcome token of each one.

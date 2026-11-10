@@ -12,7 +12,7 @@ Only the sides that were asked for are there.
 ### BUY?
 
 ```ts
-optional BUY?: DecimalString | null;
+BUY?: DecimalString | null;
 ```
 
 The best bid: the highest price a buyer offers. `null` when nobody bids.
@@ -22,7 +22,7 @@ The best bid: the highest price a buyer offers. `null` when nobody bids.
 ### SELL?
 
 ```ts
-optional SELL?: DecimalString | null;
+SELL?: DecimalString | null;
 ```
 
 The best ask: the lowest price a seller wants. `null` when nobody asks.

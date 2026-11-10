@@ -1737,7 +1737,7 @@ handle of the client.
 
 | Type Parameter |
 | ------ |
-| `S` *extends* readonly [`PublicSubscriptionSpec`](../type-aliases/PublicSubscriptionSpec.md)[] |
+| <a id="type-parameter-s"></a> `S` *extends* readonly [`PublicSubscriptionSpec`](../type-aliases/PublicSubscriptionSpec.md)[] |
 
 #### Parameters
 

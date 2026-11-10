@@ -3696,7 +3696,7 @@ in a browser.
 
 | Type Parameter |
 | ------ |
-| `S` *extends* readonly [`SubscriptionSpec`](../type-aliases/SubscriptionSpec.md)[] |
+| <a id="type-parameter-s"></a> `S` *extends* readonly [`SubscriptionSpec`](../type-aliases/SubscriptionSpec.md)[] |
 
 #### Parameters
 

@@ -21,7 +21,7 @@ The outcome token to trade: `outcomes.yes.tokenId` or `outcomes.no.tokenId` of a
 ### expiration?
 
 ```ts
-optional expiration?: Date | number;
+expiration?: Date | number;
 ```
 
 When the order expires, which makes it a good-till-date order: a `Date`, or unix seconds
@@ -33,7 +33,7 @@ good till cancelled.
 ### postOnly?
 
 ```ts
-optional postOnly?: boolean;
+postOnly?: boolean;
 ```
 
 Refuse the order rather than let it trade at once, so it only ever rests on the book.

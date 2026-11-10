@@ -8,6 +8,12 @@ A lazy list of pages. Nothing is requested until you read it: `for await` walks 
 order, stops after the page with `hasMore: false`, and fetches nothing more when you `break`.
 Every walk starts again from the first page (or from the cursor given to `from`).
 
+## Type Parameters
+
+| Type Parameter |
+| ------ |
+| <a id="type-parameter-t"></a> `T` |
+
 ## Type Declaration
 
 ### firstPage()
@@ -55,12 +61,6 @@ cursor it starts at the first page. Nothing is requested until the result is rea
 
 when the cursor lies beyond the deepest page the listing
   can reach.
-
-## Type Parameters
-
-| Type Parameter |
-| ------ |
-| `T` |
 
 ## Example
 

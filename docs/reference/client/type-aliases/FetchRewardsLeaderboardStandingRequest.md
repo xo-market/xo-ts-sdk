@@ -11,7 +11,7 @@ What [SecureClient.fetchRewardsLeaderboardStanding](../interfaces/SecureClient.m
 ### period?
 
 ```ts
-optional period?: "daily" | "weekly" | "seasonal";
+period?: "daily" | "weekly" | "seasonal";
 ```
 
 The window: the day, the last 7 days or the season. Defaults to `weekly`.

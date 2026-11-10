@@ -30,7 +30,7 @@ that outcome in that market.
 #### assetId?
 
 ```ts
-optional assetId?: string;
+assetId?: string;
 ```
 
 Only the orders of this outcome token.
@@ -65,7 +65,7 @@ Only the orders of this outcome token.
 #### market?
 
 ```ts
-optional market?: string;
+market?: string;
 ```
 
 The market's condition id, `0x` and 64 hex digits.

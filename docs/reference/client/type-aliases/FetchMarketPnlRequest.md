@@ -21,7 +21,7 @@ XO's id for the market: the `id` of a `Market`, or the `marketId` of a `Position
 ### positionId?
 
 ```ts
-optional positionId?: undefined;
+positionId?: undefined;
 ```
 
 Not given with a market.

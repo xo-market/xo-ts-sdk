@@ -11,7 +11,7 @@ What [PublicClient.listSubcategories](../interfaces/PublicClient.md#listsubcateg
 ### categoryId?
 
 ```ts
-optional categoryId?: string;
+categoryId?: string;
 ```
 
 Only the subcategories of this category. A category's id (`Category.id`), digits.

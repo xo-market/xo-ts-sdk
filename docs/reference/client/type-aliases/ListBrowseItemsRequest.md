@@ -11,7 +11,7 @@ What [PublicClient.listBrowseItems](../interfaces/PublicClient.md#listbrowseitem
 ### category?
 
 ```ts
-optional category?: string;
+category?: string;
 ```
 
 Only markets in this category, by its name, such as `Sports`, in any case.
@@ -21,7 +21,7 @@ Only markets in this category, by its name, such as `Sports`, in any case.
 ### endAfter?
 
 ```ts
-optional endAfter?: Date;
+endAfter?: Date;
 ```
 
 Only markets that end after this time.
@@ -31,7 +31,7 @@ Only markets that end after this time.
 ### order?
 
 ```ts
-optional order?: "asc" | "desc";
+order?: "asc" | "desc";
 ```
 
 The direction of `sort`. For `trending` it flips the volume ranking only. Defaults to
@@ -42,7 +42,7 @@ The direction of `sort`. For `trending` it flips the volume ranking only. Defaul
 ### pageSize?
 
 ```ts
-optional pageSize?: number;
+pageSize?: number;
 ```
 
 How many cards a page holds, from 1 to 50.
@@ -52,7 +52,7 @@ How many cards a page holds, from 1 to 50.
 ### sort?
 
 ```ts
-optional sort?: "trending" | "volume" | "created" | "endDate" | "liquidity";
+sort?: "trending" | "volume" | "created" | "endDate" | "liquidity";
 ```
 
 What to order by. `trending` is the order of XO's market page: boosted markets first, then
@@ -65,7 +65,7 @@ always match the order of `metrics.volume`. The others are as for
 ### status?
 
 ```ts
-optional status?: "active" | "closed" | "resolved";
+status?: "active" | "closed" | "resolved";
 ```
 
 Only markets in this stage of their life, as for [ListMarketsRequest](ListMarketsRequest.md). Defaults to

@@ -11,7 +11,7 @@ What [PublicClient.fetchSmartWalletAddress](../interfaces/PublicClient.md#fetchs
 ### index?
 
 ```ts
-optional index?: number;
+index?: number;
 ```
 
 Which of the owner's smart wallets: a whole number from 0. Defaults to 0, the first.

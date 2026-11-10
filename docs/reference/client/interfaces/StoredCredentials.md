@@ -7,7 +7,7 @@ Everything stored for one `(env, trading address)` pair. Each kind is optional.
 ### backend?
 
 ```ts
-optional backend?: BackendCredential;
+backend?: BackendCredential;
 ```
 
 ***
@@ -15,7 +15,7 @@ optional backend?: BackendCredential;
 ### mintPause?
 
 ```ts
-optional mintPause?: object;
+mintPause?: object;
 ```
 
 Not a secret. Set by a session whose backend key request may have created a key it did
@@ -42,5 +42,5 @@ pauseMs: number;
 ### orderbook?
 
 ```ts
-optional orderbook?: OrderbookCredential;
+orderbook?: OrderbookCredential;
 ```

@@ -11,7 +11,7 @@ The options of [createSecureClient](../functions/createSecureClient.md). Only `s
 ### credentials?
 
 ```ts
-optional credentials?: WalletCredentials;
+credentials?: WalletCredentials;
 ```
 
 Credentials this wallet already has, used instead of signing in for them: an API key
@@ -33,7 +33,7 @@ them.
 ### environment?
 
 ```ts
-optional environment?: EnvironmentConfig;
+environment?: EnvironmentConfig;
 ```
 
 Where the client reads: the hosts and contracts of an environment. Leave it out for XO
@@ -48,7 +48,7 @@ mainnet. Pass your own config only to point at another deployment, such as a loc
 ### fetch?
 
 ```ts
-optional fetch?: (input, init?) => Promise<Response>;
+fetch?: (input, init?) => Promise<Response>;
 ```
 
 The `fetch` of every request. Defaults to the global one. The reads of the chain use the
@@ -74,7 +74,7 @@ global `fetch` regardless.
 ### label?
 
 ```ts
-optional label?: string;
+label?: string;
 ```
 
 A name for the API keys this client signs in for, which they carry as
@@ -85,7 +85,7 @@ A name for the API keys this client signs in for, which they carry as
 ### onRateLimitUpdate?
 
 ```ts
-optional onRateLimitUpdate?: (update) => void;
+onRateLimitUpdate?: (update) => void;
 ```
 
 Called with the rate-limit information of every response that carries it, and of every 429.
@@ -110,7 +110,7 @@ An error it throws is ignored.
 ### rail?
 
 ```ts
-optional rail?: "sponsored" | "direct";
+rail?: "sponsored" | "direct";
 ```
 
 How transactions go on chain. Leave it out: XO's sponsor sends them and pays the gas.
@@ -122,7 +122,7 @@ works only when the client trades from the signer's own address.
 ### shutdownHooks?
 
 ```ts
-optional shutdownHooks?: boolean;
+shutdownHooks?: boolean;
 ```
 
 Whether to revoke a 1-day API key when the process ends: on SIGINT or SIGTERM (then the
@@ -146,7 +146,7 @@ The wallet that signs: `privateKey(key)` or `signerFrom(account)` from
 ### store?
 
 ```ts
-optional store?: CredentialStore;
+store?: CredentialStore;
 ```
 
 Where the client keeps the credentials it signs in for. Leave it out to keep them in
@@ -159,7 +159,7 @@ Ctrl-C (SIGINT), SIGTERM, and when the process exits normally. A persistent stor
 ### strictResponses?
 
 ```ts
-optional strictResponses?: boolean;
+strictResponses?: boolean;
 ```
 
 Whether a response field the SDK does not know is an error (for contract tests).
@@ -169,7 +169,7 @@ Whether a response field the SDK does not know is an error (for contract tests).
 ### wallet?
 
 ```ts
-optional wallet?: string;
+wallet?: string;
 ```
 
 The account that trades, as an address. Leave it out to trade from the signer's own
@@ -187,7 +187,7 @@ signs in. A smart wallet that exists already, or the signer's own address, is se
 ### WebSocket?
 
 ```ts
-optional WebSocket?: (url, protocols?) => WebSocket;
+WebSocket?: new (url, protocols?) => WebSocket;
 ```
 
 The WebSocket constructor of the live channels. Defaults to the global `WebSocket`.
