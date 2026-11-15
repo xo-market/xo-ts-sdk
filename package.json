@@ -19,13 +19,13 @@
     "docs:typecheck": "tsc -p docs/snippets"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.4",
+    "@biomejs/biome": "2.6.6",
     "@changesets/cli": "3.0.3",
     "@types/node": "22.20.5",
     "@xomarket/client": "workspace:*",
     "typedoc": "0.28.20",
     "typedoc-plugin-markdown": "4.14.1",
     "typescript": "5.9.3",
-    "viem": "2.57.14"
+    "viem": "2.57.16"
   }
 }
